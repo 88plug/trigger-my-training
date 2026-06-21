@@ -1,0 +1,7 @@
+bin/__pycache__/
+__pycache__/
+*.pyc
+.tmt/
+evals/runs/
+site/
+*.original.md

@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "trigger-my-training",
+  "displayName": "Trigger My Training",
+  "version": "1.0.0",
+  "description": "A ground-first reflex: the agent judges (from its own training, any domain) when a request is complex/irreversible, grounds before acting, and is hard-blocked from the destructive step until it has.",
+  "author": {
+    "name": "88plug",
+    "email": "andrew@88plug.com"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/88plug/trigger-my-training",
+  "repository": "https://github.com/88plug/trigger-my-training.git",
+  "keywords": [
+    "claude-code", "claude", "anthropic", "ai", "llm",
+    "ai-agents", "developer-tools", "productivity", "automation", "cli",
+    "claude-code-plugin", "claude-skills",
+    "agent-safety", "guardrails", "grounding", "preflight",
+    "irreversible-actions", "reasoning", "infrastructure", "safety"
+  ],
+  "hooks": "./hooks/hooks.json",
+  "commands": "./commands",
+  "skills": "./skills",
+  "userConfig": {
+    "gate_mode": {
+      "type": "string",
+      "title": "Gate mode",
+      "description": "Whether the hard grounding gate is active. full (default) = the gate denies destructive actions until grounded; off = disabled. The soft reflex (the ground-first skill) is always available and model-elected regardless.",
+      "default": "full"
+    },
+    "hard_gate": {
+      "type": "boolean",
+      "title": "Hard gate",
+      "description": "Deny destructive actions until grounding is recorded. Set false to make the gate advisory-only (keeps the reflex, removes the block).",
+      "default": true
+    }
+  },
+  "_statusLine_NOTE": "statusLine is a settings.json concept, not a manifest field. install.sh merges this into ~/.claude/settings.json.",
+  "statusLine": {
+    "type": "command",
+    "command": "bash \"${CLAUDE_PLUGIN_ROOT}/bin/tmt_statusline.sh\"",
+    "padding": 0
+  }
+}

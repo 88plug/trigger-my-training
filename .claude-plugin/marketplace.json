@@ -1,0 +1,31 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "trigger-my-training",
+  "description": "A ground-first reflex: the agent judges when a request is complex/irreversible and grounds before acting, hard-blocked from the destructive step until it has.",
+  "owner": {
+    "name": "88plug",
+    "email": "andrew@88plug.com"
+  },
+  "plugins": [
+    {
+      "name": "trigger-my-training",
+      "source": ".",
+      "displayName": "Trigger My Training",
+      "author": {
+        "name": "88plug",
+        "email": "andrew@88plug.com"
+      },
+      "homepage": "https://github.com/88plug/trigger-my-training",
+      "license": "MIT",
+      "category": "productivity",
+      "tags": [
+        "type:plugin",
+        "agent-safety",
+        "guardrails",
+        "grounding",
+        "preflight",
+        "irreversible-actions"
+      ]
+    }
+  ]
+}

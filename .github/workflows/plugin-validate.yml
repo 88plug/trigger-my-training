@@ -1,0 +1,19 @@
+name: plugin-validate
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.0
+      - uses: actions/setup-python@v6.2.0
+        with:
+          python-version: "3.13"
+      - name: Validate plugin manifests
+        run: python .ci/validate_plugin.py .
+      - name: Smoke test
+        run: bash tests/smoke.sh

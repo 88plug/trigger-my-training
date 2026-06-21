@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "trigger-my-training",
+  "displayName": "Trigger My Training",
+  "description": "A ground-first reflex: the agent judges (from its own training, any domain) when a request is complex/irreversible, grounds before acting, and is hard-blocked from the destructive step until it has.",
+  "author": {
+    "name": "88plug",
+    "email": "andrew@88plug.com"
+  },
+  "homepage": "https://github.com/88plug/trigger-my-training",
+  "repository": "https://github.com/88plug/trigger-my-training.git",
+  "license": "MIT",
+  "keywords": [
+    "claude-code", "claude", "anthropic", "ai", "llm",
+    "ai-agents", "developer-tools", "productivity", "automation", "cli",
+    "claude-code-plugin", "claude-skills",
+    "agent-safety", "guardrails", "grounding", "preflight",
+    "irreversible-actions", "reasoning", "infrastructure", "safety"
+  ]
+}

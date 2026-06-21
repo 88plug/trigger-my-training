@@ -1,0 +1,45 @@
+site_name: Trigger My Training
+site_description: A ground-first reflex for coding agents — judge complexity from training, ground before acting, hard-block the irreversible step.
+site_url: https://88plug.github.io/trigger-my-training/
+repo_url: https://github.com/88plug/trigger-my-training
+repo_name: 88plug/trigger-my-training
+edit_uri: edit/master/docs/
+use_directory_urls: true
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.instant
+    - content.code.copy
+    - search.suggest
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+nav:
+  - Home: index.md
+  - Architecture: architecture.md
+  - Configuration: userconfig-design.md
+  - Research ledger: research.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - tables
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.details
+  - toc:
+      permalink: true

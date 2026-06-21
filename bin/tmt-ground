@@ -1,0 +1,99 @@
+#!/usr/bin/env python3
+"""tmt-ground -- release or inspect the grounding gate.
+
+The model runs this AFTER it has emitted a Grounding Brief and run its
+read-only probes, to unlock the destructive action it was blocked on.
+
+Usage:
+  tmt-ground status                 show the active session's gate state
+  tmt-ground commit [--plan -]      mark grounded; optionally pin the plan
+                                    (reads planned commands from stdin)
+  tmt-ground commit --force         skip the "did you actually probe?" check
+  tmt-ground reset                  disarm the gate for the active session
+
+With no --session, operates on the most-recently-armed, not-yet-grounded
+session (the single active session in the common case).
+"""
+
+import argparse
+import glob
+import json
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import tmt_lib as L  # noqa: E402
+
+
+def _active_session(explicit=None):
+    if explicit:
+        return explicit
+    pat = os.path.join(L._state_dir(None), "*.json")
+    best, best_t = None, -1
+    for f in glob.glob(pat):
+        try:
+            s = json.load(open(f))
+        except (OSError, ValueError):
+            continue
+        if not s.get("grounded") and s.get("updated", 0) > best_t:
+            best, best_t = s.get("session_id"), s.get("updated", 0)
+    return best
+
+
+def main():
+    ap = argparse.ArgumentParser(prog="tmt-ground")
+    ap.add_argument("cmd", choices=["status", "commit", "reset"])
+    ap.add_argument("--session", default=None)
+    ap.add_argument("--plan", default=None,
+                    help="'-' to read newline-separated planned commands from stdin")
+    ap.add_argument("--force", action="store_true")
+    args = ap.parse_args()
+
+    sid = _active_session(args.session)
+    if not sid:
+        print("tmt-ground: no armed session found (gate not active). Nothing to do.")
+        sys.exit(0)
+    state = L.load_state(sid)
+
+    if args.cmd == "status":
+        print(json.dumps({
+            "session": sid, "required": state.get("required"),
+            "grounded": state.get("grounded"), "axes": state.get("axes"),
+            "probes_run": state.get("probes_run", []),
+            "plan_hash": state.get("plan_hash"),
+        }, indent=2))
+        sys.exit(0)
+
+    if args.cmd == "reset":
+        state["required"] = False
+        state["grounded"] = False
+        L.save_state(state)
+        print(f"tmt-ground: gate disarmed for session {sid}.")
+        sys.exit(0)
+
+    # commit
+    probes = state.get("probes_run", [])
+    if not probes and not args.force:
+        print("tmt-ground: REFUSED -- no read-only probes recorded for this "
+              "session. Grounding means verifying the risky specifics against "
+              "the live system, not just recalling them. Run your PROBE "
+              "commands first, or pass --force if probing is genuinely "
+              "impossible here (and say so in your brief).", file=sys.stderr)
+        sys.exit(1)
+
+    commands = []
+    if args.plan == "-":
+        commands = [ln for ln in sys.stdin.read().splitlines() if ln.strip()]
+    state["approved_commands"] = commands
+    state["plan_hash"] = L.plan_hash(commands) if commands else None
+    state["grounded"] = True
+    L.save_state(state)
+    print(f"tmt-ground: grounded -- gate released for session {sid} "
+          f"({len(probes)} probe(s) on record"
+          + (f", plan {state['plan_hash']}" if state["plan_hash"] else "")
+          + "). Destructive actions now permitted.")
+    sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()

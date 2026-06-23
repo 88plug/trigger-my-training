@@ -32,7 +32,7 @@ def check_manifest(fails):
         fails.append(f"FAIL: missing {p} (the manifest)")
         return
     d = load(p)
-    for f in ("name", "description", "version", "keywords"):
+    for f in ("name", "description", "keywords"):
         if f not in d:
             fails.append(f"FAIL: {p} missing '{f}'")
     kw = d.get("keywords", [])

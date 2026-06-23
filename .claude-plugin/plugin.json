@@ -2,7 +2,6 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "trigger-my-training",
   "displayName": "Trigger My Training",
-  "version": "2026.6.23",
   "description": "A ground-first reflex: the agent judges (from its own training, any domain) when a request is complex/irreversible, grounds before acting, and is hard-blocked from the destructive step until it has.",
   "author": {
     "name": "88plug",

@@ -17,6 +17,7 @@
       },
       "homepage": "https://github.com/88plug/trigger-my-training",
       "license": "MIT",
+      "version": "1.0.0",
       "category": "productivity",
       "tags": [
         "type:plugin",

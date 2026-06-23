@@ -1,18 +1,14 @@
-<div align="center">
-
 # Trigger My Training
-
-**A ground-first reflex for coding agents.** On a complex or irreversible
-request, the agent stops, reconstructs the domain's reality, treats its own
-training as a *stale hypothesis*, probes the live system, and is hard-blocked
-from the destructive step until it has grounded.
 
 [![plugin-validate](https://github.com/88plug/trigger-my-training/actions/workflows/plugin-validate.yml/badge.svg)](https://github.com/88plug/trigger-my-training/actions/workflows/plugin-validate.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat)](https://github.com/88plug/trigger-my-training/blob/master/LICENSE)
 [![Version](https://img.shields.io/badge/version-1.0.0-green?style=flat)](https://github.com/88plug/trigger-my-training/blob/master/CHANGELOG.md)
 [![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-8A2BE2?style=flat)](https://github.com/88plug/claude-code-plugins)
 
-</div>
+**A ground-first reflex for coding agents.** On a complex or irreversible
+request, the agent stops, reconstructs the domain's reality, treats its own
+training as a *stale hypothesis*, probes the live system, and is hard-blocked
+from the destructive step until it has grounded.
 
 The **trigger is the agent's own judgment**, not a hand-authored keyword list —
 so it works in any domain. The plugin's thesis is its mechanism: *trigger the

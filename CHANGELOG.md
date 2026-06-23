@@ -1,12 +1,10 @@
 # Changelog
 
 All notable changes to this project are documented here. The format follows
-[Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
-adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions use calver
+(`YYYY.M.N`), most recent first.
 
-## [Unreleased]
-
-## [1.0.0] — stable
+## 2026.6.23 — stable
 
 The architecture is settled and every surface is consistent with it: a
 **model-driven soft trigger** (the agent self-elects the `ground-first` skill
@@ -16,7 +14,7 @@ All commands, docs (README / CONTRIBUTING / SECURITY / architecture /
 userconfig), and the health-check reflect the final design; the shipped trigger
 policy is certified on the 56-prompt infra+diverse corpus.
 
-## [0.8.0] — model-driven trigger (the thesis, finally applied to itself)
+## 2026.6.22 — model-driven trigger (the thesis, finally applied to itself)
 
 ### Changed (architecture)
 
@@ -54,7 +52,7 @@ policy is certified on the 56-prompt infra+diverse corpus.
   to test the domain-agnostic claim (debugging, APIs, data/ML, payments,
   concurrency, security, refactors, algorithms, frontend, CI).
 
-## [0.7.0]
+## 2026.6.21
 
 ### Changed (hardened the hard gate)
 
@@ -73,7 +71,7 @@ policy is certified on the 56-prompt infra+diverse corpus.
   **Result: 100% interception / 0 bypass / 0% false-block** on the corpus
   (Exp 3b). Wired into `evals/run.sh`.
 
-## [0.6.0]
+## 2026.6.20
 
 ### Changed
 
@@ -107,7 +105,7 @@ policy is certified on the 56-prompt infra+diverse corpus.
   ≈ ±0.15**; real gains need better measurement (more tasks / multi-judge). The
   powered eval (18 tasks, 3-judge majority) is what resolved `know-vs-assumed`.
 
-## [0.5.0]
+## 2026.6.19
 
 ### Changed
 
@@ -117,7 +115,7 @@ policy is certified on the 56-prompt infra+diverse corpus.
   compact brief by +0.10 catch-rate and defended across three rounds. Every
   mass-adding or over-stripped variant lost. See EXPERIMENTS.md Exp 3.
 
-## [0.4.0]
+## 2026.6.18
 
 ### Added
 
@@ -142,7 +140,7 @@ policy is certified on the 56-prompt infra+diverse corpus.
 - `tmt_lib` hardened (advisory file-locking, config helpers) with the labelled-
   corpus classifier behavior preserved (precision/recall 1.0, 0 FP — verified).
 
-## [0.3.0]
+## 2026.6.17
 
 ### Changed
 
@@ -161,7 +159,7 @@ policy is certified on the 56-prompt infra+diverse corpus.
   one structural trigger that works. The `enriched`/`i2`/`i5`/`i6` arms remain
   available for ablation but are not the default.
 
-## [0.2.0]
+## 2026.6.16
 
 ### Changed
 
@@ -171,7 +169,7 @@ policy is certified on the 56-prompt infra+diverse corpus.
   axiom-alone arm was measured to do nothing on its own (Exp 1b); the brief is
   the active ingredient.
 
-## [0.1.0]
+## 2026.6.15
 
 ### Added
 
@@ -188,8 +186,3 @@ policy is certified on the 56-prompt infra+diverse corpus.
     `status` / `ground` / `reset` commands.
   - Falsification-first eval harness (`detector_eval.py`,
     `gate_unit_test.sh`, `harness.py`) and the `EXPERIMENTS.md` ledger.
-
-[Unreleased]: https://github.com/andrew/trigger-my-training/compare/v0.3.0...HEAD
-[0.3.0]: https://github.com/andrew/trigger-my-training/releases/tag/v0.3.0
-[0.2.0]: https://github.com/andrew/trigger-my-training/releases/tag/v0.2.0
-[0.1.0]: https://github.com/andrew/trigger-my-training/releases/tag/v0.1.0

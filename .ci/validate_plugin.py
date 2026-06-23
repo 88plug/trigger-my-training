@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-"""88plug plugin validator. Checks the two-manifest split, that referenced
-paths exist, and that keywords are well-formed. Exit non-zero on any FAIL."""
+"""88plug plugin validator (single-manifest model). Validates the one manifest at
+.claude-plugin/plugin.json, asserts NO root-level plugin.json exists, checks that
+referenced hook/statusline paths resolve, and that keywords are exactly 20.
+Exit non-zero on any FAIL."""
 
 import json
 import os
 import sys
 
 ROOT = sys.argv[1] if len(sys.argv) > 1 else "."
-FORBIDDEN_IN_DISCOVERY = ["version", "hooks", "commands", "skills", "mcpServers", "statusLine"]
 
 
 def load(path):
@@ -15,57 +16,50 @@ def load(path):
         return json.load(fh)
 
 
-def check_root(fails):
-    p = "plugin.json"
+def _resolve(cmd, fails, label):
+    if "CLAUDE_PLUGIN_ROOT" not in cmd:
+        return
+    rel = cmd.split("${CLAUDE_PLUGIN_ROOT}/", 1)[-1].split('"')[0]
+    if rel and not os.path.exists(os.path.join(ROOT, rel)):
+        fails.append(f"FAIL: {label} references missing file: {rel}")
+
+
+def check_manifest(fails):
+    if os.path.exists(os.path.join(ROOT, "plugin.json")):
+        fails.append("FAIL: root plugin.json must not exist (spec defines none)")
+    p = ".claude-plugin/plugin.json"
     if not os.path.exists(os.path.join(ROOT, p)):
-        fails.append(f"FAIL: missing root {p} (runtime manifest)")
+        fails.append(f"FAIL: missing {p} (the manifest)")
         return
     d = load(p)
-    for f in ("name", "version", "description"):
+    for f in ("name", "description", "version", "keywords"):
         if f not in d:
-            fails.append(f"FAIL: root {p} missing '{f}'")
+            fails.append(f"FAIL: {p} missing '{f}'")
     kw = d.get("keywords", [])
     if len(kw) != 20:
-        fails.append(f"FAIL: root {p} keywords must be exactly 20 (got {len(kw)})")
-    # hooks: a path string, or an inline dict
+        fails.append(f"FAIL: {p} keywords must be exactly 20 (got {len(kw)})")
+    # hooks: a path string to hooks.json, or an inline dict
     hooks = d.get("hooks")
     if isinstance(hooks, str):
-        if not os.path.exists(os.path.join(ROOT, hooks.lstrip("./"))):
+        rel = hooks.lstrip("./")
+        if not os.path.exists(os.path.join(ROOT, rel)):
             fails.append(f"FAIL: hooks path '{hooks}' does not exist")
+        else:
+            hd = load(rel).get("hooks", {})
+            for event, entries in hd.items():
+                for entry in entries:
+                    for h in entry.get("hooks", []):
+                        _resolve(h.get("command", ""), fails, f"hook ({event})")
     elif isinstance(hooks, dict):
         for event, entries in hooks.items():
             for entry in entries:
                 for h in entry.get("hooks", []):
-                    cmd = h.get("command", "")
-                    rel = cmd.split("${CLAUDE_PLUGIN_ROOT}/", 1)[-1].split('"')[0] if "CLAUDE_PLUGIN_ROOT" in cmd else None
-                    if rel and not os.path.exists(os.path.join(ROOT, rel)):
-                        fails.append(f"FAIL: hook script '{rel}' ({event}) does not exist")
+                    _resolve(h.get("command", ""), fails, f"hook ({event})")
     for key in ("commands", "skills"):
         v = d.get(key)
         if isinstance(v, str) and not os.path.isdir(os.path.join(ROOT, v.lstrip("./"))):
             fails.append(f"FAIL: {key} dir '{v}' does not exist")
-    # statusline script if declared
-    sl = d.get("statusLine", {}).get("command", "")
-    if "CLAUDE_PLUGIN_ROOT/" in sl:
-        rel = sl.split("CLAUDE_PLUGIN_ROOT/", 1)[1].split('"')[0]
-        if not os.path.exists(os.path.join(ROOT, rel)):
-            fails.append(f"FAIL: statusLine script '{rel}' does not exist")
-
-
-def check_discovery(fails):
-    p = ".claude-plugin/plugin.json"
-    if not os.path.exists(os.path.join(ROOT, p)):
-        fails.append(f"FAIL: missing {p} (discovery manifest)")
-        return
-    d = load(p)
-    for f in ("name", "description"):
-        if f not in d:
-            fails.append(f"FAIL: discovery {p} missing '{f}'")
-    for f in FORBIDDEN_IN_DISCOVERY:
-        if f in d:
-            fails.append(f"FAIL: discovery {p} must NOT contain runtime field '{f}'")
-    if len(d.get("keywords", [])) != 20:
-        fails.append(f"FAIL: discovery {p} keywords must be exactly 20")
+    _resolve(d.get("statusLine", {}).get("command", ""), fails, "statusLine")
 
 
 def check_marketplace(fails):
@@ -80,20 +74,13 @@ def check_marketplace(fails):
 
 def main():
     fails = []
-    check_root(fails)
-    check_discovery(fails)
+    check_manifest(fails)
     check_marketplace(fails)
-    # keyword identity between manifests
-    try:
-        if load("plugin.json").get("keywords") != load(".claude-plugin/plugin.json").get("keywords"):
-            fails.append("FAIL: root and discovery keywords must be identical")
-    except Exception:
-        pass
     if fails:
         print("\n".join(fails))
         print(f"\n{len(fails)} failure(s).")
         sys.exit(1)
-    print("validate_plugin: OK (manifests, paths, keywords all valid)")
+    print("validate_plugin: OK (manifest, paths, keywords all valid)")
 
 
 if __name__ == "__main__":

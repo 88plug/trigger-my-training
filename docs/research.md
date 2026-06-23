@@ -5,9 +5,9 @@ baseline, replicated before believing, with the dead ends kept in a
 DO-NOT-RE-ATTACK log. The two full ledgers live at the repo root (they are large
 and best read on GitHub):
 
-- **[EXPERIMENTS.md](https://github.com/88plug/trigger-my-training/blob/master/EXPERIMENTS.md)**
+- **[EXPERIMENTS.md](https://github.com/88plug/trigger-my-training/blob/main/EXPERIMENTS.md)**
   — the falsification ledger: 7 experiments + the refutation log.
-- **[INVENTIONS.md](https://github.com/88plug/trigger-my-training/blob/master/INVENTIONS.md)**
+- **[INVENTIONS.md](https://github.com/88plug/trigger-my-training/blob/main/INVENTIONS.md)**
   — the invention slate, each mechanism grounded in a named thinker.
 
 ## The headline results

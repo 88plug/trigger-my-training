@@ -2,7 +2,7 @@ name: Deploy MkDocs to GitHub Pages
 # One-time setup: gh api -X POST repos/88plug/trigger-my-training/pages -f build_type=workflow
 on:
   push:
-    branches: [master]
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read

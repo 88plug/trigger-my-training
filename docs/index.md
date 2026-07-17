@@ -25,8 +25,8 @@ model's training, don't encode static rules a human guessed at.*
 === "Marketplace"
 
     ```text
-    /plugin marketplace add 88plug/trigger-my-training
-    /plugin install trigger-my-training@trigger-my-training
+    /plugin marketplace add 88plug/claude-code-plugins
+    /plugin install trigger-my-training@88plug
     ```
 
 === "Local clone"

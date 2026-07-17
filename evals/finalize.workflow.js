@@ -1,3 +1,6 @@
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
 export const meta = {
   name: 'tmt-finalize',
   description: 'Master every Claude Code plugin capability via 10 research agents, then finalize the trigger-my-training plugin via 10 dev agents owning non-overlapping components.',
@@ -8,7 +11,8 @@ export const meta = {
   ],
 }
 
-const ROOT = '/home/andrew/trigger-my-training'
+// Repo root = parent of evals/ (this file lives under evals/)
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 
 const REF_SCHEMA = {
   type: 'object',

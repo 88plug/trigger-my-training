@@ -1,11 +1,18 @@
 {
   "name": "trigger-my-training",
   "source": {
-    "source": "github",
-    "repo": "88plug/trigger-my-training"
+    "source": "url",
+    "url": "https://github.com/88plug/trigger-my-training.git"
   },
   "description": "A ground-first reflex: the agent judges when a request is complex/irreversible and grounds before acting, hard-blocked from the destructive step until it has.",
   "category": "productivity",
-  "tags": ["type:plugin", "agent-safety", "guardrails", "grounding", "preflight", "irreversible-actions"],
+  "tags": [
+    "type:plugin",
+    "agent-safety",
+    "guardrails",
+    "grounding",
+    "preflight",
+    "irreversible-actions"
+  ],
   "homepage": "https://github.com/88plug/trigger-my-training"
 }

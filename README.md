@@ -28,16 +28,17 @@ model's training, don't encode static rules a human guessed at.
 
 ## Install
 
-```bash
-# load locally from a clone (no marketplace needed)
-claude --plugin-dir /path/to/trigger-my-training
-```
-
-Or install from the marketplace:
+Marketplace (recommended):
 
 ```text
 /plugin marketplace add 88plug/trigger-my-training
 /plugin install trigger-my-training@trigger-my-training
+```
+
+Local checkout (no marketplace needed):
+
+```bash
+claude --plugin-dir /path/to/trigger-my-training
 ```
 
 Optional status-line badge (`⏚ TMT:armed` / `:grounded`):
@@ -45,6 +46,9 @@ Optional status-line badge (`⏚ TMT:armed` / `:grounded`):
 ```bash
 bash /path/to/trigger-my-training/install.sh
 ```
+
+The hard gate and the `ground-first` skill work without the badge. Full install
+and config: [docs](https://88plug.github.io/trigger-my-training/).
 
 ## What it does (60-second version)
 
@@ -84,15 +88,30 @@ actually break the deploy. This plugin intercepts that pattern:
 The advisory/​hard split is deliberate: the nudge raises the odds the agent
 grounds; the `PreToolUse` deny is the lever that actually holds.
 
-### Configure (at enable time)
+### Gate modes & self-arm
+
+| `gate_mode` | Hard gate | Typical use |
+|---|---|---|
+| `full` (default) | **on** | production — brief + gate |
+| `gate` | **on** | gate only (eval / ablation) |
+| `brief` | off | soft reflex only |
+| `stale` | off | eval ablation arm |
+| `off` | off | hard path disabled |
 
 | option | default | effect |
 |---|---|---|
-| `gate_mode` | `full` | `full` (brief + gate) · `gate` (gate only) · `brief` (nudge only) · `stale` · `off` |
-| `hard_gate` | `true` | `false` makes the gate advisory-only (keeps the nudge, drops the block) |
+| `hard_gate` | `true` | `false` makes the gate advisory-only (keeps the skill, drops the block) |
+
+> [!WARNING]
+> Defaults are the hard deny. Self-arm is **lazy and detector-free**: the first
+> mutating tool call is denied and marks the session `required`. Read-only probes
+> and local file edits always pass. `tmt-ground commit` refuses without probe
+> evidence (use `--force` only when probing is impossible). Details:
+> [Architecture — self-arm](https://88plug.github.io/trigger-my-training/architecture/)
+> · [Configuration](https://88plug.github.io/trigger-my-training/userconfig-design/).
 
 The status line ships in `bin/` but plugins can't register a main `statusLine`,
-so add it to `~/.claude/settings.json` yourself — see [`docs/architecture.md`](docs/architecture.md).
+so add it via `install.sh` — see [docs](https://88plug.github.io/trigger-my-training/).
 
 ## Does it work? (the science)
 
@@ -148,26 +167,33 @@ it:
 
 ```
 .claude-plugin/   plugin.json, marketplace.json
-bin/              detector, enforcer, probe-log, tmt-ground state machine, lib
+bin/              enforcer, probe-log, tmt-ground state machine, lib
 hooks/            hooks.json (SessionStart, PreToolUse, PostToolUse, PostToolUseFailure)
-skills/ground-first/   SKILL.md + reference/{proxmox,general}.md
+skills/ground-first/   SKILL.md + reference packs
 agents/           grounding-investigator.md
-commands/         status, ground, reset
-evals/            harness.py, detector_eval.py, gate_unit_test.sh, tasks.jsonl
+commands/         status, ground, reset, brief, explain, doctor
+evals/            detector_eval.py, gate_unit_test.sh, tasks.jsonl
+docs/             MkDocs Material site (this repo's GitHub Pages)
 EXPERIMENTS.md    the falsification ledger
 ```
+
+## Docs
+
+- Site: [https://88plug.github.io/trigger-my-training/](https://88plug.github.io/trigger-my-training/)
+- [Architecture](docs/architecture.md) — detect→brief→gate→release + self-arm
+- [Configuration](docs/userconfig-design.md) — `gate_mode` / `hard_gate`
+- [Research](docs/research.md) — headline results + reproduce commands
 
 ## Contributing & security
 
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — dev/test workflow and the bin/hook architecture
-- [`docs/architecture.md`](docs/architecture.md) — detect→brief→gate→release flow + findings
-- [`docs/userconfig-design.md`](docs/userconfig-design.md) — the tunable options
 - [`CHANGELOG.md`](CHANGELOG.md) · [`SECURITY.md`](SECURITY.md)
 
 ```bash
-bash tests/run.sh          # unit tests (26 cases)
-bash evals/run.sh          # the three experiments
+bash tests/run.sh          # unit tests
+bash evals/run.sh          # the experiments
 claude plugin validate .   # manifest check
+mkdocs build --strict      # docs site
 ```
 
 ## License

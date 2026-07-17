@@ -19,6 +19,12 @@ and best read on GitHub):
 | Trigger should be model-driven | recall 0.28 (keyword) → 0.92 (model) | 56-prompt infra + diverse eval |
 | Gate intercepts the irreversible step | 100% / 0 bypass / 0 false-block | 62 labelled tool calls, 18 bypass styles |
 
+!!! warning "Honest accounting of “10×”"
+    The replicated grounding gain is **~2.1×** landmine-catch, not 10×. The only
+    *literal* ≥10× is the poka-yoke hard gate taking irreversible-action
+    interception from ~0 to ~1.0. Maximalist “the model already knows” and
+    “stack more cognitive scaffolds” pitches were **falsified** and removed.
+
 ## The arc
 
 An adversarial refute-gate killed the maximalist pitch ("the model already knows
@@ -28,3 +34,12 @@ falsification-first (compact + self-reflective wins; replicate before believing)
 The gate was hardened and measured. Finally the trigger itself was made
 model-driven — the plugin's own thesis applied to itself: trigger the model's
 training, never a static list a human guessed at.
+
+## Reproduce
+
+```bash
+bash evals/run.sh                 # gate unit + detector + related
+python3 evals/detector_eval.py    # free deterministic detector eval
+bash evals/gate_unit_test.sh      # self-arming gate state machine
+bash tests/run.sh                 # unit tests
+```

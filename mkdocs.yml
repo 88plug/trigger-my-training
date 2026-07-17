@@ -5,6 +5,7 @@ repo_url: https://github.com/88plug/trigger-my-training
 repo_name: 88plug/trigger-my-training
 edit_uri: edit/main/docs/
 use_directory_urls: true
+strict: true
 
 theme:
   name: material
@@ -14,6 +15,7 @@ theme:
     - navigation.instant
     - content.code.copy
     - search.suggest
+    - toc.follow
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
@@ -39,8 +41,11 @@ markdown_extensions:
   - def_list
   - footnotes
   - tables
-  - pymdownx.highlight
+  - pymdownx.highlight:
+      anchor_linenums: true
   - pymdownx.superfences
   - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
   - toc:
       permalink: true

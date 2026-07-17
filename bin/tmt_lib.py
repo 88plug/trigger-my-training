@@ -501,7 +501,32 @@ MUTATING_BASH = [
     r"\bfind\b.*-(delete|exec)\b",
     r"\bxargs\b.*\b(rm|kill|delete)\b",
     r":\s*>\s*\S",
+    # common deploy/install wrappers not covered by named CLIs above
+    r"(^|[;&|]\s*)\./deploy(\.sh)?\b",
+    r"(^|[;&|]\s*)(bash|sh)\s+([^\s;|&]*/)?(scripts?/)?deploy\b",
+    r"\b(python3?\s+)?setup\.py\s+install\b",
+    r"\bdocker-compose\s+(up|down|run|exec|kill|rm)\b",
+    r"\bdocker\s+compose\s+(up|down|run|exec|kill|rm)\b",
 ]
+
+# MCP / server-prefixed tool name tokens that imply mutation (writes, lifecycle).
+# Anchored on segment boundaries so "dispatch" does not match "patch", etc.
+# os_dbus is handled separately (mutating only with force/confirm input).
+MCP_MUTATING_NAME = re.compile(
+    r"(?:^|[__/])(?:write\w*|delete\w*|remove\w*|destroy\w*|drop\w*|"
+    r"apply\w*|deploy\w*|restart\w*|kill\w*|power\w*|exec\w*|"
+    r"run_command|set_\w*|update\w*|create\w*|put\w*|post\w*|patch\w*|"
+    r"os_service|os_power|os_hostname)",
+    re.IGNORECASE,
+)
+
+# MCP name tokens that imply a read-only probe (segment-anchored).
+MCP_READONLY_NAME = re.compile(
+    r"(?:^|[__/])(?:recall\w*|search\w*|list\w*|get_\w*|read_\w*|fetch\w*|"
+    r"health\w*|status\w*|diag\w*|screenshot\w*|tools_list|list_tools|"
+    r"tools/list)",
+    re.IGNORECASE,
+)
 
 # Read/print/search tools: may legitimately contain destructive WORDS as
 # arguments (e.g. `grep delete app.log`), so they are exempt from the generic
@@ -531,6 +556,51 @@ SUSPICIOUS_UNKNOWN = [
     r"\b(python3?|perl|ruby|node|php)\s+(-c|-e)\b",
     r"\beval\b",
 ]
+
+
+def _mcp_tool_leaf(name):
+    """Extract the leaf tool id from mcp__server__tool or server/tool names."""
+    n = name or ""
+    if n.startswith("mcp__"):
+        parts = n.split("__")
+        return parts[-1] if len(parts) >= 3 else n
+    if "/" in n:
+        return n.rsplit("/", 1)[-1]
+    return n
+
+
+def _classify_mcp(tool_name, tool_input):
+    """Classify MCP / server-prefixed tools by name (+ light input signals).
+
+    Mutating name tokens win; known read-only probes return readonly; else
+    unknown so the normal permission flow still applies.
+    """
+    name = tool_name or ""
+    leaf = _mcp_tool_leaf(name)
+    hay = "%s %s" % (name, leaf)
+
+    # os-control: os_power/os_service/os_hostname always mutating; os_dbus only
+    # when force/confirm (or similar) is present in the tool input.
+    inp = tool_input if isinstance(tool_input, dict) else {}
+    if re.search(r"(?:^|[__/])os_dbus\b", hay, re.IGNORECASE):
+        forceish = any(bool(inp.get(k)) for k in ("force", "confirm", "yes"))
+        if forceish:
+            return "mutating"
+        # bare dbus call without force → defer (unknown), not a free probe
+        return "unknown"
+
+    if MCP_MUTATING_NAME.search(hay):
+        return "mutating"
+    if MCP_READONLY_NAME.search(hay) or MCP_READONLY_NAME.search(leaf):
+        return "readonly"
+    # Common leaf prefixes for read probes (getX / listX / readX / fetchX).
+    if re.match(
+        r"^(get|list|read|fetch|search|recall|health|status|diag|screenshot)\b",
+        leaf,
+        re.IGNORECASE,
+    ):
+        return "readonly"
+    return "unknown"
 
 
 def classify_tool(tool_name, tool_input):
@@ -585,8 +655,29 @@ def classify_tool(tool_name, tool_input):
             if re.search(pat, cmd, re.IGNORECASE):
                 return "readonly"
         return "unknown"
-    # MCP and other tools: unknown -> defer
+    # MCP (mcp__server__tool) and server/tool prefixes: classify by name shape.
+    if name.startswith("mcp__") or "/" in name:
+        return _classify_mcp(name, tool_input)
     return "unknown"
+
+
+def plan_allows_bash(command, state):
+    """Whether a Bash command is permitted under a grounded plan pin.
+
+    Open grounding (no approved_commands and no plan_hash): allow any.
+    approved_commands non-empty: exact strip-match against one approved entry.
+    plan_hash alone: allow only if plan_hash([this_cmd]) matches the stored hash.
+    """
+    approved = [c.strip() for c in (state.get("approved_commands") or []) if c and c.strip()]
+    ph = state.get("plan_hash")
+    if not approved and not ph:
+        return True
+    cmd = (command or "").strip()
+    if not cmd:
+        return False
+    if approved:
+        return cmd in approved
+    return plan_hash([cmd]) == ph
 
 
 def hard_gate_enabled():

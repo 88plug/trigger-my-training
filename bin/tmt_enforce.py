@@ -62,6 +62,8 @@ def main():
 
     session_id = data.get("session_id", "unknown")
     state = L.load_state(session_id)
+    tool_name = data.get("tool_name")
+    tool_input = data.get("tool_input")
 
     # Self-arming: the gate needs no keyword detector to "arm" it. A destructive
     # action is denied until this session has recorded grounding — period. The
@@ -69,9 +71,28 @@ def main():
     # its own judgment); the gate deterministically protects the irreversible
     # step regardless. Read-only probes and local edits always pass.
     if state.get("grounded"):
+        # Plan pin: if commit stored approved_commands and/or plan_hash, Bash
+        # mutators must still match that plan. Open grounding (both empty)
+        # keeps the previous allow-any behavior for this session.
+        approved = state.get("approved_commands") or []
+        ph = state.get("plan_hash")
+        if (approved or ph) and tool_name == "Bash":
+            klass = L.classify_tool(tool_name, tool_input)
+            if klass == "mutating":
+                cmd = ""
+                if isinstance(tool_input, dict):
+                    cmd = tool_input.get("command", "") or ""
+                if not L.plan_allows_bash(cmd, state):
+                    _deny(
+                        "GROUNDING GATE: this session is grounded, but the "
+                        "command is not in the approved plan recorded by "
+                        "`tmt-ground commit --plan -` (or does not match "
+                        "plan_hash). Re-ground with the new command, or run "
+                        "only an approved command. Read-only probes still pass."
+                    )
         _allow()
 
-    klass = L.classify_tool(data.get("tool_name"), data.get("tool_input"))
+    klass = L.classify_tool(tool_name, tool_input)
     if klass != "mutating":
         _allow()
 

@@ -130,13 +130,91 @@ class TestClassifyTool(unittest.TestCase):
             L.classify_tool("Bash", {"command": "some-bespoke-tool --go"}), "unknown"
         )
 
-    def test_mcp_and_other_tools_unknown(self):
+    def test_bash_deploy_wrappers_mutating(self):
+        for cmd in (
+            "./deploy",
+            "./deploy.sh",
+            "bash scripts/deploy.sh",
+            "sh scripts/deploy",
+            "python setup.py install",
+            "python3 setup.py install",
+            "setup.py install",
+            "docker-compose up -d",
+            "docker compose up",
+        ):
+            self.assertEqual(
+                L.classify_tool("Bash", {"command": cmd}),
+                "mutating",
+                msg=cmd,
+            )
+
+    def test_mcp_mutating_by_name(self):
+        for name in (
+            "mcp__fs__write_file",
+            "mcp__fs__delete_path",
+            "mcp__k8s__apply_manifest",
+            "mcp__deploy__create_release",
+            "mcp__os__os_power",
+            "mcp__os__os_service",
+            "mcp__os__os_hostname",
+            "mcp__shell__run_command",
+            "mcp__db__drop_table",
+            "server/tools/update_config",
+        ):
+            self.assertEqual(L.classify_tool(name, {}), "mutating", msg=name)
+
+    def test_mcp_os_dbus_force_mutating(self):
+        self.assertEqual(
+            L.classify_tool("mcp__os__os_dbus", {"force": True}), "mutating"
+        )
+        self.assertEqual(
+            L.classify_tool("mcp__os__os_dbus", {"confirm": True}), "mutating"
+        )
+
+    def test_mcp_readonly_by_name(self):
+        for name in (
+            "mcp__memory__search_nodes",
+            "mcp__memory__recall",
+            "mcp__fs__list_directory",
+            "mcp__fs__read_file",
+            "mcp__api__get_status",
+            "mcp__health__health",
+            "mcp__diag__diag",
+            "mcp__screen__screenshot",
+            "mcp__meta__list_tools",
+            "server/tools/fetch_metrics",
+        ):
+            self.assertEqual(L.classify_tool(name, {}), "readonly", msg=name)
+
+    def test_mcp_ambiguous_stays_unknown(self):
         self.assertEqual(L.classify_tool("mcp__foo__bar", {}), "unknown")
+        self.assertEqual(L.classify_tool("mcp__custom__transform", {}), "unknown")
         self.assertEqual(L.classify_tool("", {}), "unknown")
 
     def test_bash_missing_command_defers(self):
         self.assertEqual(L.classify_tool("Bash", {}), "unknown")
         self.assertEqual(L.classify_tool("Bash", None), "unknown")
+
+    def test_plan_allows_bash_open_grounding(self):
+        st = {"approved_commands": [], "plan_hash": None}
+        self.assertTrue(L.plan_allows_bash("rm -rf /tmp/x", st))
+
+    def test_plan_allows_bash_approved_list(self):
+        st = {
+            "approved_commands": ["  terraform apply  ", "kubectl apply -f m.yml"],
+            "plan_hash": L.plan_hash(["terraform apply", "kubectl apply -f m.yml"]),
+        }
+        self.assertTrue(L.plan_allows_bash("terraform apply", st))
+        self.assertTrue(L.plan_allows_bash("kubectl apply -f m.yml", st))
+        self.assertFalse(L.plan_allows_bash("terraform destroy", st))
+        # strip on candidate: leading/trailing space still matches after strip
+        self.assertTrue(L.plan_allows_bash("  terraform apply  ", st))
+
+    def test_plan_allows_bash_hash_only(self):
+        cmd = "qm create 120"
+        st = {"approved_commands": [], "plan_hash": L.plan_hash([cmd])}
+        self.assertTrue(L.plan_allows_bash(cmd, st))
+        self.assertFalse(L.plan_allows_bash("qm destroy 120", st))
 
 
 class TestSessionState(unittest.TestCase):

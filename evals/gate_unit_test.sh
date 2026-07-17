@@ -34,15 +34,34 @@ python3 $BIN/tmt-ground commit --session "$SID" >/dev/null
 g=$(python3 -c "import sys;sys.path.insert(0,'bin');import tmt_lib as L;print(L.load_state('$SID').get('grounded'))")
 ok "$g" "True" "tmt-ground commit releases gate"
 
-# 6. destructive action now allowed
+# 6. destructive action now allowed (open grounding — no plan pin)
 o=$(echo "{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"qm create 120\"},\"session_id\":\"$SID\"}" \
   | python3 $BIN/tmt_enforce.py)
 ok "${o:-EMPTY}" "EMPTY" "destructive action allowed once grounded"
 
-# 7. kill-switch: hard_gate=false makes the gate advisory (allow all)
+# 7. plan pin: re-arm a session, ground with approved command, off-plan denied
+SID2="unit-plan-$$"
+echo "{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"qm create 1\"},\"session_id\":\"$SID2\"}" \
+  | python3 $BIN/tmt_enforce.py >/dev/null
+echo "{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"pvesh get /nodes\"},\"session_id\":\"$SID2\"}" \
+  | python3 $BIN/tmt_log.py
+printf 'qm create 120\n' | python3 $BIN/tmt-ground commit --session "$SID2" --plan - >/dev/null
+d=$(echo "{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"qm destroy 120\"},\"session_id\":\"$SID2\"}" \
+  | python3 $BIN/tmt_enforce.py | python3 -c "import json,sys;print(json.load(sys.stdin)['hookSpecificOutput']['permissionDecision'])" 2>/dev/null)
+ok "${d:-allow}" "deny" "off-plan Bash mutator denied after plan pin"
+o=$(echo "{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"qm create 120\"},\"session_id\":\"$SID2\"}" \
+  | python3 $BIN/tmt_enforce.py)
+ok "${o:-EMPTY}" "EMPTY" "on-plan Bash mutator allowed after plan pin"
+
+# 8. kill-switch: hard_gate=false makes the gate advisory (allow all)
 o=$(echo "{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"terraform destroy\"},\"session_id\":\"ks-$$\"}" \
   | CLAUDE_PLUGIN_OPTION_HARD_GATE=false python3 $BIN/tmt_enforce.py)
 ok "${o:-EMPTY}" "EMPTY" "hard_gate=false kill-switch allows destructive action"
+
+# 9. MCP mutating denied while ungrounded
+d=$(echo "{\"tool_name\":\"mcp__fs__write_file\",\"tool_input\":{},\"session_id\":\"mcp-$$\"}" \
+  | python3 $BIN/tmt_enforce.py | python3 -c "import json,sys;print(json.load(sys.stdin)['hookSpecificOutput']['permissionDecision'])" 2>/dev/null)
+ok "${d:-allow}" "deny" "MCP write tool denied while ungrounded"
 
 echo "---"; echo "pass=$pass fail=$fail"
 [ "$fail" -eq 0 ]

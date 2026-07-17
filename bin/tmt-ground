@@ -13,6 +13,10 @@ Usage:
 
 With no --session, operates on the most-recently-armed, not-yet-grounded
 session (the single active session in the common case).
+
+Piping planned commands (either form stores approved_commands + plan_hash):
+  printf 'terraform apply\\n' | tmt-ground commit --plan -
+  printf 'terraform apply\\n' | tmt-ground commit   # auto-detect non-tty stdin
 """
 
 import argparse
@@ -40,6 +44,19 @@ def _active_session(explicit=None):
     return best
 
 
+def _read_plan_commands(plan_arg):
+    """Return newline-separated plan commands from --plan or a non-tty pipe."""
+    if plan_arg == "-":
+        return [ln for ln in sys.stdin.read().splitlines() if ln.strip()]
+    if plan_arg:
+        # path form reserved; only '-' is supported today
+        return []
+    # Auto-store when the model pipes commands without an explicit --plan flag.
+    if not sys.stdin.isatty():
+        return [ln for ln in sys.stdin.read().splitlines() if ln.strip()]
+    return []
+
+
 def main():
     ap = argparse.ArgumentParser(prog="tmt-ground")
     ap.add_argument("cmd", choices=["status", "commit", "reset"])
@@ -61,12 +78,15 @@ def main():
             "grounded": state.get("grounded"), "axes": state.get("axes"),
             "probes_run": state.get("probes_run", []),
             "plan_hash": state.get("plan_hash"),
+            "approved_commands": state.get("approved_commands", []),
         }, indent=2))
         sys.exit(0)
 
     if args.cmd == "reset":
         state["required"] = False
         state["grounded"] = False
+        state["approved_commands"] = []
+        state["plan_hash"] = None
         L.save_state(state)
         print(f"tmt-ground: gate disarmed for session {sid}.")
         sys.exit(0)
@@ -81,9 +101,7 @@ def main():
               "impossible here (and say so in your brief).", file=sys.stderr)
         sys.exit(1)
 
-    commands = []
-    if args.plan == "-":
-        commands = [ln for ln in sys.stdin.read().splitlines() if ln.strip()]
+    commands = _read_plan_commands(args.plan)
     state["approved_commands"] = commands
     state["plan_hash"] = L.plan_hash(commands) if commands else None
     state["grounded"] = True

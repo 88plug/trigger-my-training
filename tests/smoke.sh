@@ -29,6 +29,9 @@ test -f scripts/run-python.sh
 bash -n scripts/run-python.sh
 bash scripts/run-python.sh -c 'import sys; assert sys.version_info >= (3, 10)'
 # no bare python3 in hooks.json
-! grep -qE '"command"[[:space:]]*:[[:space:]]*"python3' hooks/hooks.json
+if grep -qE '"command"[[:space:]]*:[[:space:]]*"python3' hooks/hooks.json; then
+  echo "FAIL: bare python3 command in hooks/hooks.json" >&2
+  exit 1
+fi
 env -i HOME="$HOME" PATH="/usr/bin:/bin" bash scripts/run-python.sh -c 'import sys; print(sys.version_info[0])' | grep -q 3
 echo "  ok: run-python + no bare python3 hooks"

@@ -19,8 +19,8 @@
 # heredoc would redirect stdin to the script and the piped JSON would never
 # arrive. With `-c`, stdin stays free for Claude Code's JSON.
 
-DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-ROOT=$(CDPATH= cd -- "$DIR/.." && pwd)
+DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+ROOT=$(CDPATH='' cd -- "$DIR/.." && pwd)
 RUNNER="${CLAUDE_PLUGIN_ROOT:-$ROOT}/scripts/run-python.sh"
 
 exec bash "$RUNNER" -c '

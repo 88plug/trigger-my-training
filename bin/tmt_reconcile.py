@@ -17,23 +17,28 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import tmt_lib as L  # noqa: E402
 
 
 def _emit(additional_context):
     if additional_context:
-        print(json.dumps({
-            "hookSpecificOutput": {
-                "hookEventName": "PostToolUseFailure",
-                "additionalContext": additional_context,
-            }
-        }))
+        print(
+            json.dumps(
+                {
+                    "hookSpecificOutput": {
+                        "hookEventName": "PostToolUseFailure",
+                        "additionalContext": additional_context,
+                    }
+                }
+            )
+        )
     sys.exit(0)
 
 
 def main():
-    arm_mode = (os.environ.get("CLAUDE_PLUGIN_OPTION_GATE_MODE")
-                or os.environ.get("TMT_ARM", "full")).lower()
+    arm_mode = (
+        os.environ.get("CLAUDE_PLUGIN_OPTION_GATE_MODE")
+        or os.environ.get("TMT_ARM", "full")
+    ).lower()
     if arm_mode not in ("full", "gate"):
         sys.exit(0)
 
@@ -47,7 +52,7 @@ def main():
     if data.get("is_interrupt"):
         sys.exit(0)
 
-    session_id = data.get("session_id", "unknown")
+    data.get("session_id", "unknown")
     tool = data.get("tool_name", "the tool")
     err = (data.get("error") or "").strip()
     err_line = (" Error: " + err[:300]) if err else ""

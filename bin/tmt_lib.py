@@ -35,43 +35,182 @@ SCHEMA_VERSION = 2
 
 # Verbs whose real-world referent is a state-mutating / hard-to-reverse action.
 DANGEROUS_VERBS = {
-    "deploy", "redeploy", "provision", "migrate", "destroy", "rollout",
-    "rollback", "rotate", "drop", "truncate", "terminate", "decommission",
-    "cutover", "failover", "restore", "reinstall", "reimage", "format",
-    "wipe", "purge", "flush", "flushall", "scale", "upgrade", "downgrade",
-    "apply", "bootstrap", "teardown", "delete", "remove", "reset",
-    "force-push", "rebase", "prune", "evict", "cordon", "drain", "partition",
-    "resize", "snapshot", "failback", "clone", "restart", "reload", "swap",
-    "scrub", "grow", "expand", "cutover", "rebuild",
+    "deploy",
+    "redeploy",
+    "provision",
+    "migrate",
+    "destroy",
+    "rollout",
+    "rollback",
+    "rotate",
+    "drop",
+    "truncate",
+    "terminate",
+    "decommission",
+    "cutover",
+    "failover",
+    "restore",
+    "reinstall",
+    "reimage",
+    "format",
+    "wipe",
+    "purge",
+    "flush",
+    "flushall",
+    "scale",
+    "upgrade",
+    "downgrade",
+    "apply",
+    "bootstrap",
+    "teardown",
+    "delete",
+    "remove",
+    "reset",
+    "force-push",
+    "rebase",
+    "prune",
+    "evict",
+    "cordon",
+    "drain",
+    "partition",
+    "resize",
+    "snapshot",
+    "failback",
+    "clone",
+    "restart",
+    "reload",
+    "swap",
+    "scrub",
+    "grow",
+    "expand",
+    "cutover",
+    "rebuild",
 }
 
 # Nouns that signal infrastructure / external systems / shared state.
 INFRA_NOUNS = {
-    "proxmox", "pve", "vm", "kvm", "lxc", "hypervisor", "cluster",
-    "kubernetes", "k8s", "kubectl", "helm", "kustomize", "pod", "namespace",
-    "terraform", "tofu", "opentofu", "ansible", "pulumi", "cloudformation",
-    "database", "postgres", "postgresql", "mysql", "mariadb", "mongodb",
-    "redis", "rabbitmq", "kafka", "elasticsearch", "clickhouse",
-    "dns", "route53", "cloudflare", "bind", "nameserver", "zone",
-    "nginx", "haproxy", "envoy", "traefik", "tls", "ssl", "certificate",
-    "letsencrypt", "acme", "systemd", "iptables", "nftables", "firewall",
-    "ufw", "vpc", "subnet", "iam", "s3", "rds", "ec2", "lambda", "eks",
-    "production", "prod", "staging", "ceph", "zfs", "raid", "lvm", "mdadm",
-    "docker", "compose", "swarm", "containerd", "podman", "registry",
-    "vault", "consul", "nomad", "etcd", "grafana", "prometheus",
-    "backup", "replica", "replication", "failover", "load-balancer",
-    "service", "container", "git", "ebs", "filesystem", "disk", "volume",
-    "node", "kubelet", "image", "cert", "queue", "host", "instance",
-    "account", "nameserver", "nameservers",
+    "proxmox",
+    "pve",
+    "vm",
+    "kvm",
+    "lxc",
+    "hypervisor",
+    "cluster",
+    "kubernetes",
+    "k8s",
+    "kubectl",
+    "helm",
+    "kustomize",
+    "pod",
+    "namespace",
+    "terraform",
+    "tofu",
+    "opentofu",
+    "ansible",
+    "pulumi",
+    "cloudformation",
+    "database",
+    "postgres",
+    "postgresql",
+    "mysql",
+    "mariadb",
+    "mongodb",
+    "redis",
+    "rabbitmq",
+    "kafka",
+    "elasticsearch",
+    "clickhouse",
+    "dns",
+    "route53",
+    "cloudflare",
+    "bind",
+    "nameserver",
+    "zone",
+    "nginx",
+    "haproxy",
+    "envoy",
+    "traefik",
+    "tls",
+    "ssl",
+    "certificate",
+    "letsencrypt",
+    "acme",
+    "systemd",
+    "iptables",
+    "nftables",
+    "firewall",
+    "ufw",
+    "vpc",
+    "subnet",
+    "iam",
+    "s3",
+    "rds",
+    "ec2",
+    "lambda",
+    "eks",
+    "production",
+    "prod",
+    "staging",
+    "ceph",
+    "zfs",
+    "raid",
+    "lvm",
+    "mdadm",
+    "docker",
+    "compose",
+    "swarm",
+    "containerd",
+    "podman",
+    "registry",
+    "vault",
+    "consul",
+    "nomad",
+    "etcd",
+    "grafana",
+    "prometheus",
+    "backup",
+    "replica",
+    "replication",
+    "failover",
+    "load-balancer",
+    "service",
+    "container",
+    "git",
+    "ebs",
+    "filesystem",
+    "disk",
+    "volume",
+    "node",
+    "kubelet",
+    "image",
+    "cert",
+    "queue",
+    "host",
+    "instance",
+    "account",
+    "nameserver",
+    "nameservers",
 }
 
 # Markers that a request is multi-step / compositional (reasoning-depth axis).
 COMPLEXITY_MARKERS = [
-    r"\band then\b", r"\bafter that\b", r"\bset up\b", r"\bset-up\b",
-    r"\bconfigure\b", r"\bintegrate\b", r"\bend[- ]to[- ]end\b",
-    r"\bfrom scratch\b", r"\bspin up\b", r"\bstand up\b", r"\bmake sure\b",
-    r"\bwire up\b", r"\borchestrate\b", r"\bautomate\b", r"\bprovision\b",
-    r"\bso that\b", r"\bwith .* and .* and\b",
+    r"\band then\b",
+    r"\bafter that\b",
+    r"\bset up\b",
+    r"\bset-up\b",
+    r"\bconfigure\b",
+    r"\bintegrate\b",
+    r"\bend[- ]to[- ]end\b",
+    r"\bfrom scratch\b",
+    r"\bspin up\b",
+    r"\bstand up\b",
+    r"\bmake sure\b",
+    r"\bwire up\b",
+    r"\borchestrate\b",
+    r"\bautomate\b",
+    r"\bprovision\b",
+    r"\bso that\b",
+    r"\bwith .* and .* and\b",
 ]
 
 # Edit/cosmetic signals (substring match, case-insensitive) that mark a request
@@ -80,20 +219,60 @@ COMPLEXITY_MARKERS = [
 # function", "drop that stale DNS comment line"). Checked BEFORE the
 # operational gate so these never fire. This is the precision lever.
 EDIT_MARKERS = [
-    "rename", "typo", "docstring", "terraform fmt", " fmt ", "fmt on",
-    "indentation", "indent", "cosmetic", "no logic", "logic change",
-    "don't change", "do not change", "don't touch", "do not touch",
-    "not applied", "in the repo", ".gitignore", "readme", "a comment",
-    "the comment", "comment line", "comment above", "comment noting",
-    "just the comment", "explain what", "what does", "purely cosmetic",
-    "spelling", "rephrase", "reword", "variable name", "function name",
+    "rename",
+    "typo",
+    "docstring",
+    "terraform fmt",
+    " fmt ",
+    "fmt on",
+    "indentation",
+    "indent",
+    "cosmetic",
+    "no logic",
+    "logic change",
+    "don't change",
+    "do not change",
+    "don't touch",
+    "do not touch",
+    "not applied",
+    "in the repo",
+    ".gitignore",
+    "readme",
+    "a comment",
+    "the comment",
+    "comment line",
+    "comment above",
+    "comment noting",
+    "just the comment",
+    "explain what",
+    "what does",
+    "purely cosmetic",
+    "spelling",
+    "rephrase",
+    "reword",
+    "variable name",
+    "function name",
 ]
 
 IAC_GLOBS = [
-    "*.tf", "*.tfvars", "*.hcl", "docker-compose.yml", "docker-compose.yaml",
-    "compose.yml", "compose.yaml", "Dockerfile", "Chart.yaml", "values.yaml",
-    "kustomization.yaml", "kustomization.yml", "playbook.yml", "playbook.yaml",
-    "ansible.cfg", "*.tfstate", "Vagrantfile", "main.tf",
+    "*.tf",
+    "*.tfvars",
+    "*.hcl",
+    "docker-compose.yml",
+    "docker-compose.yaml",
+    "compose.yml",
+    "compose.yaml",
+    "Dockerfile",
+    "Chart.yaml",
+    "values.yaml",
+    "kustomization.yaml",
+    "kustomization.yml",
+    "playbook.yml",
+    "playbook.yaml",
+    "ansible.cfg",
+    "*.tfstate",
+    "Vagrantfile",
+    "main.tf",
 ]
 
 _WORD = re.compile(r"[a-z0-9][a-z0-9\-]*")
@@ -112,19 +291,25 @@ def _any_re(patterns, text):
 # 1. Complexity gate (two-axis OR)
 # --------------------------------------------------------------------------
 
+
 def _scan_cwd_for_iac(cwd, limit=400):
     """Cheap, bounded scan: is this an infra repo? Top two levels only."""
     if not cwd or not os.path.isdir(cwd):
         return []
     import fnmatch
+
     hits = []
     seen = 0
     for root, dirs, files in os.walk(cwd):
-        depth = root[len(cwd):].count(os.sep)
+        depth = root[len(cwd) :].count(os.sep)
         if depth >= 2:
             dirs[:] = []
-        dirs[:] = [d for d in dirs if not d.startswith(".") and d not in
-                   ("node_modules", "venv", ".git", "__pycache__")]
+        dirs[:] = [
+            d
+            for d in dirs
+            if not d.startswith(".")
+            and d not in ("node_modules", "venv", ".git", "__pycache__")
+        ]
         for f in files:
             seen += 1
             if seen > limit:
@@ -171,8 +356,12 @@ def classify_request(prompt, cwd=None):
     if edit_hits and not iac:
         signals.append("edit/cosmetic intent: %s -> direct" % edit_hits[:3])
         return {
-            "fire": False, "arm": False, "complexity": complexity,
-            "blast": "SAFE", "signals": signals, "tier": "direct",
+            "fire": False,
+            "arm": False,
+            "complexity": complexity,
+            "blast": "SAFE",
+            "signals": signals,
+            "tier": "direct",
         }
 
     # --- blast-radius axis (operational intent) ---
@@ -206,8 +395,12 @@ def classify_request(prompt, cwd=None):
         tier = "gate-to-human" if blast == "CRITICAL" else "ground-first"
 
     return {
-        "fire": fire, "arm": arm, "complexity": complexity, "blast": blast,
-        "signals": signals, "tier": tier,
+        "fire": fire,
+        "arm": arm,
+        "complexity": complexity,
+        "blast": blast,
+        "signals": signals,
+        "tier": tier,
     }
 
 
@@ -219,58 +412,94 @@ def classify_request(prompt, cwd=None):
 READONLY_BASH = [
     r"^\s*(ls|cat|head|tail|less|more|stat|file|find|grep|rg|awk|sed -n|wc|echo|printf|pwd|whoami|id|env|date|uname|which|command -v|type|tree)\b",
     r"^\s*(df|du|free|lsblk|lscpu|lspci|lsusb|dmidecode|ip a|ip addr|ip route|ss|netstat|ping|dig|nslookup|host|curl -s|wget -q|ps|top|uptime|nvidia-smi)\b",
-    r"\bpveversion\b", r"\bpvesh\s+get\b", r"\bqm\s+(list|config|status|showcmd)\b",
-    r"\bpct\s+(list|config|status)\b", r"\bpveum\s+\w*\s*(list|print)\b",
+    r"\bpveversion\b",
+    r"\bpvesh\s+get\b",
+    r"\bqm\s+(list|config|status|showcmd)\b",
+    r"\bpct\s+(list|config|status)\b",
+    r"\bpveum\s+\w*\s*(list|print)\b",
     r"\bkubectl\s+(get|describe|logs|top|explain|api-resources|version|config view|cluster-info)\b",
     r"\bhelm\s+(list|status|get|show|history|version)\b",
     r"\bterraform\s+(plan|show|validate|version|state list|output|fmt -check|providers)\b",
     r"\btofu\s+(plan|show|validate|version|output)\b",
     r"\bdocker\s+(ps|images|inspect|logs|version|info)\b",
     r"\bsystemctl\s+(status|is-active|is-enabled|list-units|show|cat)\b",
-    r"\bjournalctl\b", r"\bgit\s+(status|log|diff|show|branch|remote|config --get|rev-parse|ls-files)\b",
-    r"\bpg_dump\b.*--schema-only", r"\bpsql\b.*-c\s+[\"']?\s*select\b",
-    r"\b(SELECT|select)\b", r"\bredis-cli\s+(info|ping|config get|dbsize|keys)\b",
+    r"\bjournalctl\b",
+    r"\bgit\s+(status|log|diff|show|branch|remote|config --get|rev-parse|ls-files)\b",
+    r"\bpg_dump\b.*--schema-only",
+    r"\bpsql\b.*-c\s+[\"']?\s*select\b",
+    r"\b(SELECT|select)\b",
+    r"\bredis-cli\s+(info|ping|config get|dbsize|keys)\b",
     r"\brabbitmqctl\s+(list|status)\b",
 ]
 
 # Bash sub-patterns that are clearly state-mutating / dangerous.
 MUTATING_BASH = [
-    r"\brm\s+-[rf]", r"\brm\s+", r"\bmv\s+", r"\bdd\s+", r"\bmkfs", r"\bfdisk",
-    r"\bparted\b", r"\bchmod\b", r"\bchown\b", r"\btruncate\b", r">\s*/", r">>\s*/",
+    r"\brm\s+-[rf]",
+    r"\brm\s+",
+    r"\bmv\s+",
+    r"\bdd\s+",
+    r"\bmkfs",
+    r"\bfdisk",
+    r"\bparted\b",
+    r"\bchmod\b",
+    r"\bchown\b",
+    r"\btruncate\b",
+    r">\s*/",
+    r">>\s*/",
     r"\bqm\s+(create|set|clone|start|stop|shutdown|destroy|migrate|resize|rollback|importdisk|template)\b",
     r"\bpct\s+(create|set|start|stop|destroy|migrate)\b",
-    r"\bpvesh\s+(create|set|delete)\b", r"\bpveum\s+(user|acl|role)\s+\w*\s*(add|modify|delete)\b",
+    r"\bpvesh\s+(create|set|delete)\b",
+    r"\bpveum\s+(user|acl|role)\s+\w*\s*(add|modify|delete)\b",
     r"\bkubectl\s+(apply|delete|create|patch|replace|scale|drain|cordon|uncordon|rollout|edit|label|annotate|set)\b",
     r"\bhelm\s+(install|upgrade|uninstall|rollback|delete)\b",
     r"\bterraform\s+(apply|destroy|import|state\s+(rm|mv|push)|taint|untaint)\b",
-    r"\btofu\s+(apply|destroy|import)\b", r"\bansible-playbook\b", r"\bpulumi\s+up\b",
+    r"\btofu\s+(apply|destroy|import)\b",
+    r"\bansible-playbook\b",
+    r"\bpulumi\s+up\b",
     r"\bdocker\s+(run|rm|rmi|kill|stop|exec|build|push|compose\s+up|compose\s+down)\b",
     r"\bsystemctl\s+(start|stop|restart|reload|enable|disable|mask)\b",
-    r"\biptables\b", r"\bnft\b", r"\bufw\s+(allow|deny|delete|enable|disable)\b",
+    r"\biptables\b",
+    r"\bnft\b",
+    r"\bufw\s+(allow|deny|delete|enable|disable)\b",
     r"\bgit\s+(push|reset\s+--hard|rebase|commit|merge|cherry-pick|clean\s+-[a-z]*f|branch\s+-D|tag\s+-d)\b",
     r"\b(apt|apt-get|yum|dnf|pacman|zypper|brew)\s+(install|remove|purge|upgrade|-S)\b",
-    r"\bpip\s+install\b", r"\bnpm\s+(install|i|publish|uninstall)\b",
+    r"\bpip\s+install\b",
+    r"\bnpm\s+(install|i|publish|uninstall)\b",
     r"\bpsql\b.*-c\s+[\"']?\s*(insert|update|delete|drop|alter|truncate|create)\b",
     r"\bmysql\b.*-e\s+[\"']?\s*(insert|update|delete|drop|alter|truncate|create)\b",
     r"\bredis-cli\s+(set|del|flushall|flushdb|config set)\b",
-    r"\brabbitmqctl\s+(delete|purge|set|stop|reset)\b", r"\bcrontab\b",
+    r"\brabbitmqctl\s+(delete|purge|set|stop|reset)\b",
+    r"\bcrontab\b",
     # system control / power / process / disk
-    r"\b(shutdown|reboot|halt|poweroff)\b", r"\binit\s+[0123456]\b",
-    r"\b(kill|pkill|killall)\b", r"\b(shred|wipefs|blkdiscard|sgdisk|wipe)\b",
-    r"\b(mount|umount|swapoff|swapon)\b", r"\bsysctl\s+-w\b", r"\bmodprobe\b",
+    r"\b(shutdown|reboot|halt|poweroff)\b",
+    r"\binit\s+[0123456]\b",
+    r"\b(kill|pkill|killall)\b",
+    r"\b(shred|wipefs|blkdiscard|sgdisk|wipe)\b",
+    r"\b(mount|umount|swapoff|swapon)\b",
+    r"\bsysctl\s+-w\b",
+    r"\bmodprobe\b",
     r"\b(usermod|useradd|userdel|groupadd|passwd|chattr|setfacl|visudo)\b",
-    r"\bsed\s+-i\b", r"\bln\s+-[a-z]*s", r"\btee\b", r"\bcp\s+-[a-z]*[rf]",
-    r"\brsync\b.*--delete", r"\b(make|ninja)\s+install\b",
-    r"\bcargo\s+(publish|install)\b", r"\bgem\s+push\b", r"\bgo\s+install\b",
+    r"\bsed\s+-i\b",
+    r"\bln\s+-[a-z]*s",
+    r"\btee\b",
+    r"\bcp\s+-[a-z]*[rf]",
+    r"\brsync\b.*--delete",
+    r"\b(make|ninja)\s+install\b",
+    r"\bcargo\s+(publish|install)\b",
+    r"\bgem\s+push\b",
+    r"\bgo\s+install\b",
     # cloud / orchestration CLIs (destructive verbs)
     r"\baws\s+\w+\s+(delete|terminate|deregister|remove|put|create|stop|reboot)",
     r"\bgcloud\s+.*\b(delete|create|stop|reset|deploy)\b",
     r"\baz\s+.*\b(delete|create|stop|deploy)\b",
     r"\b(doctl|flyctl|fly|heroku|vercel|wrangler|supabase|oc|nomad)\b.*\b(delete|destroy|deploy|create|scale|restart|rm)\b",
-    r"\bvault\s+(write|delete|kv\s+(put|delete))\b", r"\betcdctl\s+(put|del)\b",
-    r"\bconsul\s+kv\s+(put|delete)\b", r"\bgh\s+\w+\s+(delete|create)\b",
+    r"\bvault\s+(write|delete|kv\s+(put|delete))\b",
+    r"\betcdctl\s+(put|del)\b",
+    r"\bconsul\s+kv\s+(put|delete)\b",
+    r"\bgh\s+\w+\s+(delete|create)\b",
     r"\bmongo(sh)?\b.*\.(drop|remove|delete(Many|One)?)\b",
-    r"\bfind\b.*-(delete|exec)\b", r"\bxargs\b.*\b(rm|kill|delete)\b",
+    r"\bfind\b.*-(delete|exec)\b",
+    r"\bxargs\b.*\b(rm|kill|delete)\b",
     r":\s*>\s*\S",
 ]
 
@@ -295,10 +524,12 @@ GENERIC_DESTRUCTIVE = (
 SUSPICIOUS_UNKNOWN = [
     r"(>|>>)\s*(/|~)",
     r"\|\s*(sudo\s+)?(sh|bash|zsh|python3?|perl|ruby|node)\b",
-    r"\btee\s+(/|~)", r"\bcurl\b[^|]*\|\s*(sudo\s+)?(sh|bash)",
+    r"\btee\s+(/|~)",
+    r"\bcurl\b[^|]*\|\s*(sudo\s+)?(sh|bash)",
     # opaque interpreter one-liners: can't verify the body, so when the gate is
     # armed we fail closed and require grounding rather than trust it.
-    r"\b(python3?|perl|ruby|node|php)\s+(-c|-e)\b", r"\beval\b",
+    r"\b(python3?|perl|ruby|node|php)\s+(-c|-e)\b",
+    r"\beval\b",
 ]
 
 
@@ -315,9 +546,18 @@ def classify_tool(tool_name, tool_input):
     refactors) are 'write-local' so the gate never blocks ordinary coding --
     the single most important precision fix from the design review.
     """
-    name = (tool_name or "")
-    if name in ("Read", "Grep", "Glob", "NotebookRead", "WebFetch", "WebSearch",
-                "TodoWrite", "Task", "BashOutput"):
+    name = tool_name or ""
+    if name in (
+        "Read",
+        "Grep",
+        "Glob",
+        "NotebookRead",
+        "WebFetch",
+        "WebSearch",
+        "TodoWrite",
+        "Task",
+        "BashOutput",
+    ):
         return "readonly"
     if name in ("Write", "Edit", "MultiEdit", "NotebookEdit"):
         return "write-local"
@@ -331,8 +571,9 @@ def classify_tool(tool_name, tool_input):
                 return "mutating"
         # 2. generic destructive verb as a sub-command, unless this is a
         #    read/print/search command that merely mentions the word
-        if (not re.search(SEARCH_PREFIX, cmd, re.IGNORECASE)
-                and re.search(GENERIC_DESTRUCTIVE, cmd, re.IGNORECASE)):
+        if not re.search(SEARCH_PREFIX, cmd, re.IGNORECASE) and re.search(
+            GENERIC_DESTRUCTIVE, cmd, re.IGNORECASE
+        ):
             return "mutating"
         # 3. fail closed on side-effect signals (before readonly, so a readonly
         #    prefix like `echo ... | bash` cannot mask them)
@@ -358,8 +599,15 @@ def hard_gate_enabled():
     this to decide whether a 'mutating' verdict should actually deny or merely
     annotate.
     """
-    raw = (os.environ.get("CLAUDE_PLUGIN_OPTION_HARD_GATE")
-           or os.environ.get("TMT_HARD_GATE") or "").strip().lower()
+    raw = (
+        (
+            os.environ.get("CLAUDE_PLUGIN_OPTION_HARD_GATE")
+            or os.environ.get("TMT_HARD_GATE")
+            or ""
+        )
+        .strip()
+        .lower()
+    )
     if raw == "":
         return True
     return raw in ("1", "true", "yes", "on")
@@ -369,14 +617,18 @@ def hard_gate_enabled():
 # 3. Session state (the grounding gate)
 # --------------------------------------------------------------------------
 
+
 def _state_dir(data_dir):
     # Deterministic, coordination-free path so the hooks (which run with the
     # plugin env) and the model-invoked `tmt-ground` CLI (which may not) always
     # agree. Precedence: explicit arg > CLAUDE_PLUGIN_DATA (persists across
     # plugin updates) > TMT_DATA (eval isolation) > ~/.tmt/data (fallback).
-    base = (data_dir or os.environ.get("CLAUDE_PLUGIN_DATA")
-            or os.environ.get("TMT_DATA")
-            or os.path.join(os.path.expanduser("~"), ".tmt", "data"))
+    base = (
+        data_dir
+        or os.environ.get("CLAUDE_PLUGIN_DATA")
+        or os.environ.get("TMT_DATA")
+        or os.path.join(os.path.expanduser("~"), ".tmt", "data")
+    )
     d = os.path.join(base, "sessions")
     os.makedirs(d, exist_ok=True)
     return d
@@ -389,9 +641,14 @@ def _state_path(session_id, data_dir):
 
 def _default_state(session_id):
     return {
-        "schema": SCHEMA_VERSION, "session_id": session_id,
-        "required": False, "grounded": False, "axes": {},
-        "plan_hash": None, "approved_commands": [], "probes_run": [],
+        "schema": SCHEMA_VERSION,
+        "session_id": session_id,
+        "required": False,
+        "grounded": False,
+        "axes": {},
+        "plan_hash": None,
+        "approved_commands": [],
+        "probes_run": [],
         "updated": 0,
     }
 
@@ -400,8 +657,7 @@ def _lock(fh, exclusive):
     if fcntl is None:
         return
     try:
-        fcntl.flock(fh.fileno(),
-                    fcntl.LOCK_EX if exclusive else fcntl.LOCK_SH)
+        fcntl.flock(fh.fileno(), fcntl.LOCK_EX if exclusive else fcntl.LOCK_SH)
     except OSError:
         pass  # best-effort; os.replace still gives an atomic publish
 
@@ -496,6 +752,7 @@ def plan_hash(commands):
 # 4. Self-check (cheap invariants; `python tmt_lib.py` to run)
 # --------------------------------------------------------------------------
 
+
 def self_check():
     """Assert the load-bearing invariants. Returns (ok, [failures])."""
     fails = []
@@ -505,50 +762,67 @@ def self_check():
             fails.append(msg)
 
     # classify_request: edit-suppressor wins, operational fires.
-    expect(not classify_request("rename the deploy_vm function")["fire"],
-           "edit-suppressor should keep a local rename SAFE/no-fire")
-    expect(classify_request("redeploy the proxmox cluster")["fire"],
-           "operational verb+infra should fire")
-    expect(classify_request("redeploy the proxmox cluster")["blast"]
-           == "CRITICAL", "verb+infra should be CRITICAL")
-    expect(not classify_request("fix a typo in the readme")["fire"],
-           "typo/readme edit should not fire")
+    expect(
+        not classify_request("rename the deploy_vm function")["fire"],
+        "edit-suppressor should keep a local rename SAFE/no-fire",
+    )
+    expect(
+        classify_request("redeploy the proxmox cluster")["fire"],
+        "operational verb+infra should fire",
+    )
+    expect(
+        classify_request("redeploy the proxmox cluster")["blast"] == "CRITICAL",
+        "verb+infra should be CRITICAL",
+    )
+    expect(
+        not classify_request("fix a typo in the readme")["fire"],
+        "typo/readme edit should not fire",
+    )
 
     # classify_tool: reversibility manifest.
     expect(classify_tool("Read", {}) == "readonly", "Read is readonly")
     expect(classify_tool("Edit", {}) == "write-local", "Edit is write-local")
-    expect(classify_tool("Bash", {"command": "rm -rf /tmp/x"}) == "mutating",
-           "rm -rf is mutating")
-    expect(classify_tool("Bash", {"command": "ls -la"}) == "readonly",
-           "ls is readonly")
-    expect(classify_tool("Bash", {"command": "terraform apply"}) == "mutating",
-           "terraform apply is mutating")
+    expect(
+        classify_tool("Bash", {"command": "rm -rf /tmp/x"}) == "mutating",
+        "rm -rf is mutating",
+    )
+    expect(classify_tool("Bash", {"command": "ls -la"}) == "readonly", "ls is readonly")
+    expect(
+        classify_tool("Bash", {"command": "terraform apply"}) == "mutating",
+        "terraform apply is mutating",
+    )
 
     # state round-trip + race-free update under a temp dir.
     import tempfile
+
     with tempfile.TemporaryDirectory() as d:
         st = load_state("sc-test", data_dir=d)
-        expect(st["required"] is False and st["grounded"] is False,
-               "fresh state defaults")
+        expect(
+            st["required"] is False and st["grounded"] is False, "fresh state defaults"
+        )
         st["required"] = True
         save_state(st, data_dir=d)
-        expect(load_state("sc-test", data_dir=d)["required"] is True,
-               "save/load round-trip")
-        update_state("sc-test", lambda s: s["probes_run"].append("ls"),
-                     data_dir=d)
-        update_state("sc-test", lambda s: s["probes_run"].append("cat"),
-                     data_dir=d)
-        expect(load_state("sc-test", data_dir=d)["probes_run"]
-               == ["ls", "cat"], "update_state preserves prior appends")
+        expect(
+            load_state("sc-test", data_dir=d)["required"] is True,
+            "save/load round-trip",
+        )
+        update_state("sc-test", lambda s: s["probes_run"].append("ls"), data_dir=d)
+        update_state("sc-test", lambda s: s["probes_run"].append("cat"), data_dir=d)
+        expect(
+            load_state("sc-test", data_dir=d)["probes_run"] == ["ls", "cat"],
+            "update_state preserves prior appends",
+        )
 
-    expect(plan_hash(["b", "a"]) == plan_hash(["a", "b"]),
-           "plan_hash is order-independent")
+    expect(
+        plan_hash(["b", "a"]) == plan_hash(["a", "b"]), "plan_hash is order-independent"
+    )
 
     return (not fails), fails
 
 
 if __name__ == "__main__":
     import sys
+
     ok, problems = self_check()
     if ok:
         print("tmt_lib self-check: OK")

@@ -19,7 +19,11 @@ import tmt_lib as L  # noqa: E402
 
 
 def main():
-    calls = [json.loads(l) for l in open(os.path.join(HERE, "tool_calls.jsonl")) if l.strip()]
+    calls = [
+        json.loads(line)
+        for line in open(os.path.join(HERE, "tool_calls.jsonl"))
+        if line.strip()
+    ]
     destructive = [c for c in calls if c["expect"] == "mutating"]
     benign = [c for c in calls if c["expect"] != "mutating"]
 
@@ -41,10 +45,16 @@ def main():
 
     interception = intercepted / len(destructive)
     fb_rate = len(false_block) / len(benign)
-    print(f"corpus: {len(calls)} tool calls ({len(destructive)} destructive / {len(benign)} benign)")
-    print(f"INTERCEPTION (destructive denied):  {intercepted}/{len(destructive)} = {interception:.3f}")
+    print(
+        f"corpus: {len(calls)} tool calls ({len(destructive)} destructive / {len(benign)} benign)"
+    )
+    print(
+        f"INTERCEPTION (destructive denied):  {intercepted}/{len(destructive)} = {interception:.3f}"
+    )
     print(f"BYPASS (destructive slipped):       {len(bypass)}/{len(destructive)}")
-    print(f"FALSE-BLOCK (benign denied):        {len(false_block)}/{len(benign)} = {fb_rate:.3f}")
+    print(
+        f"FALSE-BLOCK (benign denied):        {len(false_block)}/{len(benign)} = {fb_rate:.3f}"
+    )
     if bypass:
         print("\n  BYPASSES (must fix — destructive not caught):")
         for cat, got, cmd in bypass:
@@ -56,9 +66,13 @@ def main():
     if not bypass and not false_block:
         print("\n  clean: 100% interception, 0 false-blocks on the labelled corpus.")
 
-    out = {"interception": round(interception, 3), "bypass": len(bypass),
-           "false_block_rate": round(fb_rate, 3), "n_destructive": len(destructive),
-           "n_benign": len(benign)}
+    out = {
+        "interception": round(interception, 3),
+        "bypass": len(bypass),
+        "false_block_rate": round(fb_rate, 3),
+        "n_destructive": len(destructive),
+        "n_benign": len(benign),
+    }
     print("\n" + json.dumps(out))
     return 0 if not bypass else 1
 

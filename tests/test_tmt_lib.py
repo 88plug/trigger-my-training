@@ -73,7 +73,8 @@ class TestClassifyRequest(unittest.TestCase):
 
     def test_multistep_with_infra_fires(self):
         v = L.classify_request(
-            "set up the kubernetes ingress and then wire up TLS so that traffic flows")
+            "set up the kubernetes ingress and then wire up TLS so that traffic flows"
+        )
         self.assertTrue(v["fire"])
 
     def test_none_and_empty_prompt_safe(self):
@@ -94,20 +95,30 @@ class TestClassifyTool(unittest.TestCase):
 
     def test_bash_readonly_probes(self):
         self.assertEqual(L.classify_tool("Bash", {"command": "qm list"}), "readonly")
-        self.assertEqual(L.classify_tool("Bash", {"command": "pvesh get /nodes"}), "readonly")
         self.assertEqual(
-            L.classify_tool("Bash", {"command": "terraform plan"}), "readonly")
+            L.classify_tool("Bash", {"command": "pvesh get /nodes"}), "readonly"
+        )
         self.assertEqual(
-            L.classify_tool("Bash", {"command": "kubectl get pods"}), "readonly")
+            L.classify_tool("Bash", {"command": "terraform plan"}), "readonly"
+        )
+        self.assertEqual(
+            L.classify_tool("Bash", {"command": "kubectl get pods"}), "readonly"
+        )
 
     def test_bash_mutating(self):
-        self.assertEqual(L.classify_tool("Bash", {"command": "rm -rf /tmp/x"}), "mutating")
         self.assertEqual(
-            L.classify_tool("Bash", {"command": "terraform apply -auto-approve"}), "mutating")
+            L.classify_tool("Bash", {"command": "rm -rf /tmp/x"}), "mutating"
+        )
         self.assertEqual(
-            L.classify_tool("Bash", {"command": "kubectl delete pod foo"}), "mutating")
+            L.classify_tool("Bash", {"command": "terraform apply -auto-approve"}),
+            "mutating",
+        )
         self.assertEqual(
-            L.classify_tool("Bash", {"command": "qm destroy 100"}), "mutating")
+            L.classify_tool("Bash", {"command": "kubectl delete pod foo"}), "mutating"
+        )
+        self.assertEqual(
+            L.classify_tool("Bash", {"command": "qm destroy 100"}), "mutating"
+        )
 
     def test_bash_mutating_wins_over_readonly_in_chain(self):
         # worst-case step governs the chain
@@ -116,7 +127,8 @@ class TestClassifyTool(unittest.TestCase):
 
     def test_bash_unknown_command_defers(self):
         self.assertEqual(
-            L.classify_tool("Bash", {"command": "some-bespoke-tool --go"}), "unknown")
+            L.classify_tool("Bash", {"command": "some-bespoke-tool --go"}), "unknown"
+        )
 
     def test_mcp_and_other_tools_unknown(self):
         self.assertEqual(L.classify_tool("mcp__foo__bar", {}), "unknown")
@@ -197,8 +209,7 @@ class TestSessionState(unittest.TestCase):
             try:
                 s = L.load_state("env-sess")  # no explicit data_dir
                 L.save_state(s)
-                self.assertTrue(
-                    os.path.isdir(os.path.join(envdir, "sessions")))
+                self.assertTrue(os.path.isdir(os.path.join(envdir, "sessions")))
             finally:
                 if old is None:
                     del os.environ["TMT_DATA"]

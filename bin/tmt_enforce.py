@@ -18,20 +18,25 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import tmt_lib as L  # noqa: E402
+from typing import NoReturn
 
 
-def _allow():
+def _allow() -> NoReturn:
     sys.exit(0)  # no output == "no decision" == defer to normal permission flow
 
 
 def _deny(reason):
-    print(json.dumps({
-        "hookSpecificOutput": {
-            "hookEventName": "PreToolUse",
-            "permissionDecision": "deny",
-            "permissionDecisionReason": reason,
-        }
-    }))
+    print(
+        json.dumps(
+            {
+                "hookSpecificOutput": {
+                    "hookEventName": "PreToolUse",
+                    "permissionDecision": "deny",
+                    "permissionDecisionReason": reason,
+                }
+            }
+        )
+    )
     sys.exit(0)
 
 
@@ -42,8 +47,10 @@ def main():
         _allow()
 
     # GATE_MODE (userConfig) overrides TMT_ARM for the off/gate decision.
-    arm_mode = (os.environ.get("CLAUDE_PLUGIN_OPTION_GATE_MODE")
-                or os.environ.get("TMT_ARM", "full")).lower()
+    arm_mode = (
+        os.environ.get("CLAUDE_PLUGIN_OPTION_GATE_MODE")
+        or os.environ.get("TMT_ARM", "full")
+    ).lower()
     if arm_mode not in ("full", "gate"):
         _allow()
 

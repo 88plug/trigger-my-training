@@ -19,7 +19,7 @@ import tmt_lib as L  # noqa: E402
 
 def main():
     corpus = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, "tasks.jsonl")
-    tasks = [json.loads(l) for l in open(corpus) if l.strip()]
+    tasks = [json.loads(line) for line in open(corpus) if line.strip()]
     tp = fp = tn = fn = 0
     misfires = []
     for t in tasks:
@@ -40,7 +40,7 @@ def main():
     rec = tp / (tp + fn) if (tp + fn) else float("nan")
     f1 = (2 * prec * rec / (prec + rec)) if (prec + rec) else float("nan")
 
-    print(f"corpus: {len(tasks)} tasks  ({tp+fn} complex / {tn+fp} simple)")
+    print(f"corpus: {len(tasks)} tasks  ({tp + fn} complex / {tn + fp} simple)")
     print(f"confusion: TP={tp} FP={fp} TN={tn} FN={fn}")
     print(f"precision={prec:.3f}  recall={rec:.3f}  f1={f1:.3f}")
     if misfires:
@@ -50,9 +50,16 @@ def main():
     else:
         print("\nno misfires — clean separation on the labelled corpus.")
 
-    out = {"tp": tp, "fp": fp, "tn": tn, "fn": fn,
-           "precision": prec, "recall": rec, "f1": f1,
-           "misfires": [{"kind": k, "id": i, "prompt": p} for k, i, p in misfires]}
+    out = {
+        "tp": tp,
+        "fp": fp,
+        "tn": tn,
+        "fn": fn,
+        "precision": prec,
+        "recall": rec,
+        "f1": f1,
+        "misfires": [{"kind": k, "id": i, "prompt": p} for k, i, p in misfires],
+    }
     with open(os.path.join(HERE, "runs"), "w") if False else open(os.devnull, "w"):
         pass
     print("\n" + json.dumps(out))

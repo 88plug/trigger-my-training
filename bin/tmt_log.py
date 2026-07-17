@@ -15,8 +15,10 @@ import tmt_lib as L  # noqa: E402
 
 def main():
     # GATE_MODE (userConfig) overrides TMT_ARM, matching the enforcer.
-    arm_mode = (os.environ.get("CLAUDE_PLUGIN_OPTION_GATE_MODE")
-                or os.environ.get("TMT_ARM", "full")).lower()
+    arm_mode = (
+        os.environ.get("CLAUDE_PLUGIN_OPTION_GATE_MODE")
+        or os.environ.get("TMT_ARM", "full")
+    ).lower()
     if arm_mode not in ("full", "gate"):
         sys.exit(0)
     raw = sys.stdin.read()

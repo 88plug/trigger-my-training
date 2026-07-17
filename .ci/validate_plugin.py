@@ -1,87 +1,300 @@
 #!/usr/bin/env python3
-"""88plug plugin validator (single-manifest model). Validates the one manifest at
-.claude-plugin/plugin.json, asserts NO root-level plugin.json exists, checks that
-referenced hook/statusline paths resolve, and that keywords are exactly 20.
-Exit non-zero on any FAIL."""
+"""Validate one Claude Code plugin against the failure modes that have actually
+shipped to 88plug users. Designed for CI on every push (rolling plugins ship each
+commit, so this is the safety net). Hard-errors only on unambiguous breakage;
+softer portability/hygiene issues are warnings.
 
-import json
-import os
+usage: validate_plugin.py [PLUGIN_ROOT]   (default ".")
+exit 0 = clean, 1 = errors found.
+"""
+
+from __future__ import annotations
 import sys
+import os
+import re
+import json
+import shutil
+import subprocess
+from pathlib import Path
 
-ROOT = sys.argv[1] if len(sys.argv) > 1 else "."
+try:
+    import yaml
+except Exception:
+    yaml = None
 
-
-def load(path):
-    with open(os.path.join(ROOT, path)) as fh:
-        return json.load(fh)
-
-
-def _resolve(cmd, fails, label):
-    if "CLAUDE_PLUGIN_ROOT" not in cmd:
-        return
-    rel = cmd.split("${CLAUDE_PLUGIN_ROOT}/", 1)[-1].split('"')[0]
-    if rel and not os.path.exists(os.path.join(ROOT, rel)):
-        fails.append(f"FAIL: {label} references missing file: {rel}")
-
-
-def check_manifest(fails):
-    if os.path.exists(os.path.join(ROOT, "plugin.json")):
-        fails.append("FAIL: root plugin.json must not exist (spec defines none)")
-    p = ".claude-plugin/plugin.json"
-    if not os.path.exists(os.path.join(ROOT, p)):
-        fails.append(f"FAIL: missing {p} (the manifest)")
-        return
-    d = load(p)
-    for f in ("name", "description", "keywords"):
-        if f not in d:
-            fails.append(f"FAIL: {p} missing '{f}'")
-    kw = d.get("keywords", [])
-    if len(kw) != 20:
-        fails.append(f"FAIL: {p} keywords must be exactly 20 (got {len(kw)})")
-    # hooks: a path string to hooks.json, or an inline dict
-    hooks = d.get("hooks")
-    if isinstance(hooks, str):
-        rel = hooks.lstrip("./")
-        if not os.path.exists(os.path.join(ROOT, rel)):
-            fails.append(f"FAIL: hooks path '{hooks}' does not exist")
-        else:
-            hd = load(rel).get("hooks", {})
-            for event, entries in hd.items():
-                for entry in entries:
-                    for h in entry.get("hooks", []):
-                        _resolve(h.get("command", ""), fails, f"hook ({event})")
-    elif isinstance(hooks, dict):
-        for event, entries in hooks.items():
-            for entry in entries:
-                for h in entry.get("hooks", []):
-                    _resolve(h.get("command", ""), fails, f"hook ({event})")
-    for key in ("commands", "skills"):
-        v = d.get(key)
-        if isinstance(v, str) and not os.path.isdir(os.path.join(ROOT, v.lstrip("./"))):
-            fails.append(f"FAIL: {key} dir '{v}' does not exist")
-    _resolve(d.get("statusLine", {}).get("command", ""), fails, "statusLine")
+ROOT = Path(sys.argv[1] if len(sys.argv) > 1 else ".").resolve()
+errors: list[str] = []
+warns: list[str] = []
 
 
-def check_marketplace(fails):
-    p = ".claude-plugin/marketplace.json"
-    if not os.path.exists(os.path.join(ROOT, p)):
-        fails.append(f"FAIL: missing {p}")
-        return
-    d = load(p)
-    if not d.get("plugins"):
-        fails.append(f"FAIL: {p} has no plugins[]")
+def err(m):
+    errors.append(m)
 
 
-def main():
-    fails = []
-    check_manifest(fails)
-    check_marketplace(fails)
-    if fails:
-        print("\n".join(fails))
-        print(f"\n{len(fails)} failure(s).")
-        sys.exit(1)
-    print("validate_plugin: OK (manifest, paths, keywords all valid)")
+def warn(m):
+    warns.append(m)
 
 
-if __name__ == "__main__":
-    main()
+def rel(p):
+    try:
+        return str(Path(p).relative_to(ROOT))
+    except Exception:
+        return str(p)
+
+
+# --- 1. plugin.json: valid JSON + has a name ---------------------------------
+# Single-manifest spec: exactly one manifest at .claude-plugin/plugin.json and NO
+# root-level plugin.json (the Claude Code spec defines none; one would orphan hooks).
+if (ROOT / "plugin.json").exists():
+    err(
+        "root plugin.json must not exist (single-manifest spec — only .claude-plugin/plugin.json)"
+    )
+man = ROOT / ".claude-plugin" / "plugin.json"
+if not man.exists():
+    err(".claude-plugin/plugin.json is missing")
+else:
+    try:
+        m = json.loads(man.read_text())
+        if not m.get("name"):
+            err("plugin.json: required 'name' field missing")
+        if len(m.get("keywords", [])) != 20:
+            err(
+                f"plugin.json: keywords must be exactly 20 (found {len(m.get('keywords', []))})"
+            )
+    except Exception as e:
+        err(f"plugin.json: invalid JSON — {e}")
+
+# --- 2. bash default-form var in a MANIFEST (Claude Code does not substitute it)
+# Only manifests are variable-substituted; the ${VAR:-default} form inside a .sh
+# script is legitimate, so scope this to the JSON manifests only.
+BAD = re.compile(r"\$\{CLAUDE_PLUGIN_(?:ROOT|DATA):-")
+manifests = [man, ROOT / ".mcp.json", ROOT / "hooks" / "hooks.json"]
+for p in manifests:
+    if p.exists():
+        if BAD.search(p.read_text()):
+            err(
+                f"{rel(p)}: uses ${{CLAUDE_PLUGIN_*:-default}} — Claude Code substitutes "
+                f"only the plain ${{CLAUDE_PLUGIN_ROOT}} form; the :- default is left literal"
+            )
+
+
+# --- 3. skill/command/agent frontmatter must parse (the ': ' YAML break) ------
+# Skills & agents REQUIRE name+description (that pair is the trigger surface, and
+# the ': ' break silently drops it). Commands derive their name from the filename
+# and only carry a description, so for commands we just require a clean parse.
+def _frontmatter(md):
+    txt = md.read_text()
+    if not txt.lstrip().startswith("---"):
+        return None, "no YAML frontmatter"
+    parts = txt.split("---", 2)
+    if len(parts) < 3:
+        return None, "unterminated frontmatter"
+    if yaml is None:
+        return {}, None
+    try:
+        d = yaml.safe_load(parts[1])
+    except Exception as e:
+        return None, (
+            f"frontmatter YAML parse error ({e.__class__.__name__}) — "
+            "often an unquoted description containing ': '"
+        )
+    if not isinstance(d, dict):
+        return None, "frontmatter is not a mapping"
+    return d, None
+
+
+for md in list(ROOT.glob("skills/**/SKILL.md")) + list(ROOT.glob("agents/**/*.md")):
+    d, e = _frontmatter(md)
+    if e:
+        err(f"{rel(md)}: {e}")
+    elif isinstance(d, dict) and (not d.get("name") or not d.get("description")):
+        err(
+            f"{rel(md)}: frontmatter missing name/description (silently dropped by a ': ' break?)"
+        )
+
+for md in list(ROOT.glob("commands/**/*.md")):
+    d, e = _frontmatter(md)
+    if e:
+        err(f"{rel(md)}: {e}")
+    elif isinstance(d, dict) and not d.get("description"):
+        warn(f"{rel(md)}: command frontmatter has no description")
+
+# --- 4. hooks.json valid + every ${CLAUDE_PLUGIN_ROOT}/… path resolves --------
+# hooks/hooks.json is auto-loaded (no plugin.json "hooks" field needed). Resolve
+# command paths so a rename can't silently ship a dead PreToolUse gate.
+hj = ROOT / "hooks" / "hooks.json"
+if hj.exists():
+    try:
+        hd = json.loads(hj.read_text())
+    except Exception as e:
+        err(f"hooks/hooks.json: invalid JSON — {e}")
+        hd = None
+    if isinstance(hd, dict):
+        for event, groups in (hd.get("hooks") or {}).items():
+            if not isinstance(groups, list):
+                continue
+            for g in groups:
+                for h in (g or {}).get("hooks") or []:
+                    cmd = (h or {}).get("command") or ""
+                    for m in re.findall(r"\$\{CLAUDE_PLUGIN_ROOT\}/([^\s\"']+)", cmd):
+                        if not (ROOT / m).exists():
+                            err(
+                                f"hooks/hooks.json {event}: references missing file: {m}"
+                            )
+                    # Bare PATH-fragile interpreter as the hook command (not via
+                    # run-python.sh / a launcher under CLAUDE_PLUGIN_ROOT).
+                    first = cmd.strip().split(None, 1)[0] if cmd.strip() else ""
+                    if first in (
+                        "python",
+                        "python3",
+                        "uv",
+                        "uvx",
+                        "npx",
+                        "node",
+                        "bunx",
+                    ):
+                        err(
+                            f"hooks/hooks.json {event}: bare '{first}' command — "
+                            "use bash \"${CLAUDE_PLUGIN_ROOT}/scripts/…\" launcher"
+                        )
+
+# --- 4b. statusLine command path (optional; not a real plugin.json field but
+# install.sh / docs may mirror it) --------------------------------------------
+if man.exists():
+    try:
+        m = json.loads(man.read_text())
+    except Exception:
+        m = {}
+    cmd = ((m.get("statusLine") or {}) if isinstance(m, dict) else {}).get("command") or ""
+    for ref in re.findall(r"\$\{CLAUDE_PLUGIN_ROOT\}/([^\s\"']+)", cmd):
+        if not (ROOT / ref).exists():
+            err(f"plugin.json statusLine: references missing file: {ref}")
+
+# --- 5. shell scripts: bash -n is a hard error; zsh -n is a portability warning
+shells = {s: shutil.which(s) for s in ("bash", "zsh")}
+for sh in sorted(set(ROOT.glob("hooks/**/*.sh")) | set(ROOT.glob("scripts/**/*.sh"))):
+    if shells["bash"]:
+        r = subprocess.run(["bash", "-n", str(sh)], capture_output=True, text=True)
+        if r.returncode != 0:
+            tail = (r.stderr.strip().splitlines() or ["parse error"])[-1]
+            err(f"{rel(sh)}: bash -n syntax error — {tail}")
+    if shells["zsh"]:
+        r = subprocess.run(["zsh", "-n", str(sh)], capture_output=True, text=True)
+        if r.returncode != 0:
+            tail = (r.stderr.strip().splitlines() or ["parse error"])[-1]
+            warn(
+                f"{rel(sh)}: not zsh-parseable — {tail} "
+                "(breaks if a slash command sources it in a zsh user shell)"
+            )
+    if "hooks" in sh.parts and not os.access(sh, os.X_OK):
+        warn(f"{rel(sh)}: missing executable bit (test -x fails)")
+
+
+# --- 6. MCP servers: dead http/sse endpoints + bare PATH-fragile commands ----
+# deepwiki shipped a dead /sse endpoint (410). total-recall/searxng shipped a bare
+# "uv"/"uvx" command, which assumes the tool is on Claude Code's MCP-spawn PATH —
+# often it isn't (uv/uvx/npx/bunx live in ~/.local/bin, ~/.cargo/bin, nvm dirs off
+# that PATH), so the server silently "Failed to connect". Use a launcher script
+# under ${CLAUDE_PLUGIN_ROOT} that resolves the tool robustly.
+def _mcp_servers():
+    servers = {}
+    for p in (man, ROOT / ".mcp.json"):
+        if p.exists():
+            try:
+                servers.update(json.loads(p.read_text()).get("mcpServers") or {})
+            except Exception:
+                pass
+    return servers
+
+
+PATH_FRAGILE = {
+    "uv",
+    "uvx",
+    "npx",
+    "bunx",
+    "pnpm",
+    "yarn",
+    "deno",
+    "bun",
+    "node",
+    "pipx",
+    "python",
+    "python3",
+}
+for key, spec in _mcp_servers().items():
+    if not isinstance(spec, dict):
+        continue
+    cmd = (spec.get("command") or "").strip()
+    if cmd in PATH_FRAGILE:
+        warn(
+            f".mcp[{key}]: command '{cmd}' is a bare tool name — PATH-fragile (it usually "
+            f"lives off Claude's MCP-spawn PATH, e.g. ~/.local/bin → silent 'Failed to "
+            f"connect'). Use a launcher script under ${{CLAUDE_PLUGIN_ROOT}} that resolves it."
+        )
+    url = spec.get("url") or ""
+    if (
+        url
+        and spec.get("type", "") in ("http", "sse", "streamable-http")
+        and shutil.which("curl")
+    ):
+        r = subprocess.run(
+            ["curl", "-sS", "-o", "/dev/null", "-w", "%{http_code}", "-m", "12", url],
+            capture_output=True,
+            text=True,
+        )
+        code = (r.stdout or "").strip()
+        if r.returncode != 0:
+            warn(
+                f".mcp[{key}]: endpoint {url} unreachable (curl exit {r.returncode}) — verify it is live"
+            )
+        elif code in ("404", "410"):
+            warn(
+                f".mcp[{key}]: endpoint {url} returned HTTP {code} (gone/not-found) — likely dead/moved"
+            )
+
+# --- 7. agents that reference a tool in their body but don't grant it ---------
+# amnesia's summarizer told the model to "Write … via the `Write` tool" while its
+# frontmatter tools list omitted Write, so the handoff silently never persisted.
+KNOWN_TOOLS = (
+    "Write",
+    "Edit",
+    "MultiEdit",
+    "Read",
+    "Bash",
+    "Grep",
+    "Glob",
+    "Task",
+    "WebFetch",
+    "WebSearch",
+    "NotebookEdit",
+)
+for md in ROOT.glob("agents/**/*.md"):
+    d, e = _frontmatter(md)
+    if e or not isinstance(d, dict):
+        continue
+    granted = d.get("tools")
+    if isinstance(granted, str):
+        granted = {t.strip() for t in granted.split(",")}
+    elif isinstance(granted, list):
+        granted = {str(t).strip() for t in granted}
+    else:
+        continue
+    body = md.read_text().split("---", 2)[-1]
+    for tool in KNOWN_TOOLS:
+        if tool in granted:
+            continue
+        if re.search(
+            rf"(`{tool}`\s*tool|\bthe\s+{tool}\s+tool|\bvia\s+(?:the\s+)?{tool}\b)",
+            body,
+        ):
+            warn(
+                f"{rel(md)}: body uses the {tool} tool but frontmatter 'tools' doesn't grant it (silent-failure risk)"
+            )
+
+# --- report ------------------------------------------------------------------
+for w in warns:
+    print(f"::warning:: {w}" if os.environ.get("GITHUB_ACTIONS") else f"WARN  {w}")
+for e in errors:
+    print(f"::error:: {e}" if os.environ.get("GITHUB_ACTIONS") else f"ERROR {e}")
+print(f"\n{rel(ROOT) or '.'}: {len(errors)} error(s), {len(warns)} warning(s)")
+sys.exit(1 if errors else 0)

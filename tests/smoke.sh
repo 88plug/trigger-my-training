@@ -10,7 +10,8 @@ for f in bin/*.py; do "$PY" -c "import ast; ast.parse(open('$f').read())" && ech
 "$PY" bin/tmt_lib.py   # self-check
 
 echo "=== smoke: shell scripts syntax ==="
-for f in bin/tmt-ground bin/tmt_statusline.sh install.sh evals/*.sh tests/*.sh; do
+# bin/tmt-ground is Python (#!/usr/bin/env python3) — syntax-checked above via ast
+for f in bin/tmt_statusline.sh install.sh scripts/run-python.sh evals/*.sh tests/*.sh; do
   bash -n "$f" && echo "  ok: $f"
 done
 

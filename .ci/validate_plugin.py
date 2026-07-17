@@ -90,7 +90,15 @@ def _frontmatter(md):
     if len(parts) < 3:
         return None, "unterminated frontmatter"
     if yaml is None:
-        return {}, None
+        # CI may not install PyYAML — still extract required scalar keys so
+        # we don't false-fail every skill as "missing name/description".
+        block = parts[1]
+        d = {}
+        for key in ("name", "description", "tools", "model"):
+            m = re.search(rf"(?m)^{key}:\s*(.+?)\s*$", block)
+            if m:
+                d[key] = m.group(1).strip().strip("\"'")
+        return d, None
     try:
         d = yaml.safe_load(parts[1])
     except Exception as e:

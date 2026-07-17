@@ -12,15 +12,18 @@
 #   (empty line)      idle -- nothing armed, so the statusline stays silent
 #
 # Empty output / non-zero exit renders a blank row, which is the desired
-# "silent on simple work" behaviour. Pure POSIX sh + a python3 stdlib helper.
+# "silent on simple work" behaviour. Pure POSIX sh + stdlib Python via
+# scripts/run-python.sh (thin Claude PATH / Homebrew-safe).
 #
 # The python source goes through `-c` (an argument), NOT a heredoc, because a
 # heredoc would redirect stdin to the script and the piped JSON would never
 # arrive. With `-c`, stdin stays free for Claude Code's JSON.
 
 DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+ROOT=$(CDPATH= cd -- "$DIR/.." && pwd)
+RUNNER="${CLAUDE_PLUGIN_ROOT:-$ROOT}/scripts/run-python.sh"
 
-exec python3 -c '
+exec bash "$RUNNER" -c '
 import json, os, sys
 sys.path.insert(0, sys.argv[1])
 import tmt_lib as L

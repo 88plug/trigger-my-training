@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/bin/tmt_session.py\"",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/run-python.sh\" \"${CLAUDE_PLUGIN_ROOT}/bin/tmt_session.py\"",
             "timeout": 15
           }
         ]
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/bin/tmt_enforce.py\"",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/run-python.sh\" \"${CLAUDE_PLUGIN_ROOT}/bin/tmt_enforce.py\"",
             "timeout": 15
           }
         ]
@@ -29,7 +29,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/bin/tmt_log.py\"",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/run-python.sh\" \"${CLAUDE_PLUGIN_ROOT}/bin/tmt_log.py\"",
             "timeout": 10
           }
         ]
@@ -41,7 +41,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/bin/tmt_reconcile.py\"",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/run-python.sh\" \"${CLAUDE_PLUGIN_ROOT}/bin/tmt_reconcile.py\"",
             "timeout": 10
           }
         ]

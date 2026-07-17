@@ -23,3 +23,12 @@ bash evals/gate_unit_test.sh >/dev/null && echo "  ok: gate state machine"
 "$PY" -m unittest discover -s tests -p 'test_*.py' 2>&1 | tail -1
 
 echo "=== smoke: all good ==="
+
+echo "=== smoke: run-python launcher ==="
+test -f scripts/run-python.sh
+bash -n scripts/run-python.sh
+bash scripts/run-python.sh -c 'import sys; assert sys.version_info >= (3, 10)'
+# no bare python3 in hooks.json
+! grep -qE '"command"[[:space:]]*:[[:space:]]*"python3' hooks/hooks.json
+env -i HOME="$HOME" PATH="/usr/bin:/bin" bash scripts/run-python.sh -c 'import sys; print(sys.version_info[0])' | grep -q 3
+echo "  ok: run-python + no bare python3 hooks"

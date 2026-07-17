@@ -1,0 +1,7 @@
+{
+  "include": ["bin", "evals", "tests", ".ci"],
+  "exclude": ["**/__pycache__", ".venv", "site", ".ruff_cache"],
+  "extraPaths": ["bin"],
+  "pythonVersion": "3.12",
+  "typeCheckingMode": "basic"
+}

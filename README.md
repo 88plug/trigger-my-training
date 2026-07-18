@@ -1,19 +1,14 @@
 <div align="center">
 
-# trigger-my-training
+# Trigger My Training
 
-**A ground-first reflex for coding agents.** On a complex or irreversible
-request, the agent stops, reconstructs the domain's reality, treats its own
-training as a *stale hypothesis*, probes the live system, and is hard-blocked
-from the destructive step until it has grounded.
-
-The trigger is the agent's *own judgment*, not a hand-authored keyword list —
-so it works in any domain. The plugin's thesis is its mechanism: trigger the
-model's training, don't encode static rules a human guessed at.
+**Claude Code plugin for agent safety and grounding** — a ground-first reflex
+for AI coding agents. The agent judges complexity from its own training, grounds
+before acting, and is hard-blocked from irreversible steps until it has.
 
 [![plugin-validate](https://github.com/88plug/trigger-my-training/actions/workflows/plugin-validate.yml/badge.svg)](https://github.com/88plug/trigger-my-training/actions/workflows/plugin-validate.yml)
 [![License: FSL-1.1-ALv2](https://img.shields.io/badge/license-FSL--1.1--ALv2-blue?style=flat)](LICENSE)
-[![Docs](https://img.shields.io/badge/docs-online-blue?style=flat)](https://88plug.github.io/trigger-my-training)
+[![Docs](https://img.shields.io/badge/docs-online-blue?style=flat)](https://88plug.github.io/trigger-my-training/)
 [![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-8A2BE2?style=flat)](https://github.com/88plug/claude-code-plugins)
 [![DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/88plug/trigger-my-training)
 
@@ -21,40 +16,32 @@ model's training, don't encode static rules a human guessed at.
 
 > [!IMPORTANT]
 > The core insight, after an adversarial review that killed the naive version:
-> **an agent's training is always stale.** So the reflex does not use recall as
-> the *answer* — it uses recall to generate the *list of things to verify*, then
-> runtime overrides recall. That one reframing is what makes grounding help
-> instead of hurt.
+> **an agent's training is always stale.** The reflex does not use recall as the
+> *answer* — it uses recall to generate the *list of things to verify*, then
+> runtime overrides recall. That reframing is what makes grounding help instead
+> of hurt.
 
 ## Install
-
-Marketplace (recommended):
 
 ```text
 /plugin marketplace add 88plug/claude-code-plugins
 /plugin install trigger-my-training@88plug
 ```
 
-Local checkout (no marketplace needed):
-
-```bash
-claude --plugin-dir /path/to/trigger-my-training
-```
-
-Optional status-line badge (`⏚ TMT:armed` / `:grounded`):
+The hard gate and the `ground-first` skill work immediately. Optional status-line
+badge (`⏚ TMT:armed` / `:grounded`):
 
 ```bash
 bash /path/to/trigger-my-training/install.sh
 ```
 
-The hard gate and the `ground-first` skill work without the badge. Full install
-and config: [docs](https://88plug.github.io/trigger-my-training/).
+Full install and config: [docs](https://88plug.github.io/trigger-my-training/).
 
-## What it does (60-second version)
+## What it does
 
-Ask an agent to *"deploy a VM to Proxmox"* and it tends to barrel into
-`qm create` — encoding stale defaults and skipping the prerequisites that
-actually break the deploy. This plugin intercepts that pattern:
+Ask an AI coding agent to *"deploy a VM to Proxmox"* and it tends to barrel into
+`qm create` — stale defaults, skipped prerequisites. This Claude Code plugin
+intercepts that pattern with agent guardrails and live verification:
 
 1. **Recognize** (`ground-first` skill, model-elected) — the agent judges, from
    its *own understanding*, whether a request is complex/irreversible enough to
@@ -70,28 +57,27 @@ actually break the deploy. This plugin intercepts that pattern:
 
 > [!NOTE]
 > The *trigger* is the model's judgment (no hand-authored keyword list — that
-> would be the very static domain knowledge this plugin exists to replace). The
-> *gate* stays deterministic, because a safety floor must not depend on the model
-> it is gating.
+> would be the static domain knowledge this plugin replaces). The *gate* stays
+> deterministic: a safety floor must not depend on the model it is gating.
 
 | Component | Surface | Role |
-|---|---|---|
-| `ground-first` | skill (+ 6 reference packs) | **the soft trigger** — model-elected from a keyword-free policy description; holds the Grounding Brief procedure |
-| `tmt_enforce.py` | PreToolUse hook | **hard** deny on the irreversible step |
-| `tmt_reconcile.py` | PostToolUseFailure hook | on a tool failure, reconcile the falsified assumption (predict-then-check) |
-| `tmt_log.py` / `tmt_session.py` | PostToolUse / SessionStart | record probes / prune stale state |
-| `tmt-ground` | bin CLI | release the gate after probing |
-| `grounding-investigator` | agent | isolated live-probing pass for CRITICAL tasks |
+| --- | --- | --- |
+| `ground-first` | skill (+ 6 reference packs) | Soft trigger — model-elected, keyword-free; holds the Grounding Brief procedure |
+| `tmt_enforce.py` | PreToolUse hook | Hard deny on the irreversible step |
+| `tmt_reconcile.py` | PostToolUseFailure hook | On tool failure, reconcile the falsified assumption (predict-then-check) |
+| `tmt_log.py` / `tmt_session.py` | PostToolUse / SessionStart | Record probes / prune stale state |
+| `tmt-ground` | bin CLI | Release the gate after probing |
+| `grounding-investigator` | agent | Isolated live-probing pass for CRITICAL tasks |
 | `tmt_statusline.sh` | status line | `⏚ TMT:armed` / `⏚ TMT:grounded` badge |
-| `/status` `/ground` `/reset` `/brief` `/explain` `/doctor` | commands | inspect / force / disarm / brief / explain / health-check |
+| `/status` `/ground` `/reset` `/brief` `/explain` `/doctor` | commands | Inspect / force / disarm / brief / explain / health-check |
 
-The advisory/​hard split is deliberate: the nudge raises the odds the agent
+The advisory/hard split is deliberate: the nudge raises the odds the agent
 grounds; the `PreToolUse` deny is the lever that actually holds.
 
-### Gate modes & self-arm
+### Gate modes and self-arm
 
 | `gate_mode` | Hard gate | Typical use |
-|---|---|---|
+| --- | --- | --- |
 | `full` (default) | **on** | production — brief + gate |
 | `gate` | **on** | gate only (eval / ablation) |
 | `brief` | off | soft reflex only |
@@ -99,7 +85,7 @@ grounds; the `PreToolUse` deny is the lever that actually holds.
 | `off` | off | hard path disabled |
 
 | option | default | effect |
-|---|---|---|
+| --- | --- | --- |
 | `hard_gate` | `true` | `false` makes the gate advisory-only (keeps the skill, drops the block) |
 
 > [!WARNING]
@@ -110,24 +96,23 @@ grounds; the `PreToolUse` deny is the lever that actually holds.
 > [Architecture — self-arm](https://88plug.github.io/trigger-my-training/architecture/)
 > · [Configuration](https://88plug.github.io/trigger-my-training/userconfig-design/).
 
-The status line ships in `bin/` but plugins can't register a main `statusLine`,
-so add it via `install.sh` — see [docs](https://88plug.github.io/trigger-my-training/).
+Plugins can't register a main `statusLine`, so the badge ships in `bin/` and is
+wired via `install.sh` — see [docs](https://88plug.github.io/trigger-my-training/).
 
-## Does it work? (the science)
+## Does it work?
 
-Built falsification-first. See [`EXPERIMENTS.md`](EXPERIMENTS.md) for the full
-ledger; headline:
+Built falsification-first. Full ledger: [`EXPERIMENTS.md`](EXPERIMENTS.md).
 
 - **Detector (Exp 2, deterministic):** clean separation of operational vs
   edit-intent on a 28-task labelled corpus — precision/recall **1.0**, **0**
-  false positives (in-sample; real-world calibration is the known debt).
+  false positives (in-sample; real-world calibration is known debt).
 - **Hard gate (Exp 3, unit):** blocks the mutation, allows probes + local
   edits, releases after grounding — **7/7**.
-- **Landmine-catch (Exp 1, A/B + ablation, powered to 12 domains):** the
-  replicated result on `claude-haiku-4-5` —
+- **Landmine-catch (Exp 1, A/B + ablation, powered to 12 domains):** replicated
+  on `claude-haiku-4-5` —
 
   | arm | catch-rate | vs baseline |
-  |---|---|---|
+  | --- | --- | --- |
   | no plugin | 0.181 | — |
   | **compact Pre-Mortem Brief** | **0.386** | **~2.1×** |
   | + Staleness Axiom alone | 0.156 | worse (axiom alone does nothing) |
@@ -146,14 +131,13 @@ ledger; headline:
   [`EXPERIMENTS.md`](EXPERIMENTS.md), invention slate: [`INVENTIONS.md`](INVENTIONS.md).
 
 ```bash
-bash evals/run.sh          # all three experiments
-python3 evals/detector_eval.py    # just the free deterministic one
+bash evals/run.sh                 # all three experiments
+python3 evals/detector_eval.py    # free deterministic detector eval
 ```
 
-## What this is NOT
+## What this is not
 
-Three independent refuters killed the maximalist pitch, and the design reflects
-it:
+Three independent refuters killed the maximalist pitch; the design reflects it:
 
 - It does **not** claim the model "already knows" the domain — training is
   stale; that is the whole point.
@@ -184,10 +168,13 @@ EXPERIMENTS.md    the falsification ledger
 - [Configuration](docs/userconfig-design.md) — `gate_mode` / `hard_gate`
 - [Research](docs/research.md) — headline results + reproduce commands
 
-## Contributing & security
+## Development
 
-- [`CONTRIBUTING.md`](CONTRIBUTING.md) — dev/test workflow and the bin/hook architecture
-- [`CHANGELOG.md`](CHANGELOG.md) · [`SECURITY.md`](SECURITY.md)
+Local checkout (no marketplace):
+
+```bash
+claude --plugin-dir /path/to/trigger-my-training
+```
 
 ```bash
 bash tests/run.sh          # unit tests
@@ -195,6 +182,9 @@ bash evals/run.sh          # the experiments
 claude plugin validate .   # manifest check
 mkdocs build --strict      # docs site
 ```
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the bin/hook architecture,
+[`CHANGELOG.md`](CHANGELOG.md), and [`SECURITY.md`](SECURITY.md).
 
 ## License
 

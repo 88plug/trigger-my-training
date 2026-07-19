@@ -6,7 +6,7 @@
 [![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-8A2BE2?style=flat)](https://github.com/88plug/claude-code-plugins)
 [![Docs](https://img.shields.io/badge/docs-online-blue?style=flat)](https://88plug.github.io/trigger-my-training/)
 
-**A ground-first reflex for coding agents.** On a complex or irreversible
+**Ground-first reflex for Claude Code & Grok.** On a complex or irreversible
 request, the agent stops, reconstructs the domain's reality, treats its own
 training as a *stale hypothesis*, probes the live system, and is hard-blocked
 from the destructive step until it has grounded.
@@ -23,12 +23,12 @@ model's training, don't encode static rules a human guessed at.*
 
 ## Install
 
-=== "Marketplace"
+### Claude Code
 
-    ```text
-    /plugin marketplace add 88plug/claude-code-plugins
-    /plugin install trigger-my-training@88plug
-    ```
+```text
+/plugin marketplace add 88plug/claude-code-plugins
+/plugin install trigger-my-training@88plug
+```
 
 ### Grok Build
 
@@ -37,13 +37,12 @@ grok plugin marketplace add 88plug/claude-code-plugins
 grok plugin install trigger-my-training@88plug --trust
 ```
 
+### Local development
 
-=== "Local clone"
-
-    ```bash
-    git clone https://github.com/88plug/trigger-my-training.git
-    claude --plugin-dir /path/to/trigger-my-training
-    ```
+```bash
+git clone https://github.com/88plug/trigger-my-training.git
+claude --plugin-dir /path/to/trigger-my-training
+```
 
 At enable time you can set `gate_mode` and `hard_gate` (see
 [Configuration](https://github.com/88plug/trigger-my-training/blob/main/userconfig-design.md)). Defaults are safe: gate on, hard deny.

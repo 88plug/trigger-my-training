@@ -2,9 +2,9 @@
 
 # Trigger My Training
 
-**Claude Code plugin for agent safety and grounding** — a ground-first reflex
-for AI coding agents. The agent judges complexity from its own training, grounds
-before acting, and is hard-blocked from irreversible steps until it has.
+**Ground-first reflex for Claude Code & Grok** — agent safety and grounding.
+The agent judges complexity from its own training, grounds before acting, and
+is hard-blocked from irreversible steps until it has.
 
 [![plugin-validate](https://github.com/88plug/trigger-my-training/actions/workflows/plugin-validate.yml/badge.svg)](https://github.com/88plug/trigger-my-training/actions/workflows/plugin-validate.yml)
 [![License: FSL-1.1-ALv2](https://img.shields.io/badge/license-FSL--1.1--ALv2-blue?style=flat)](LICENSE)
@@ -22,6 +22,8 @@ before acting, and is hard-blocked from irreversible steps until it has.
 > of hurt.
 
 ## Install
+
+### Claude Code
 
 ```text
 /plugin marketplace add 88plug/claude-code-plugins
@@ -48,8 +50,8 @@ Full install and config: [docs](https://88plug.github.io/trigger-my-training/).
 ## What it does
 
 Ask an AI coding agent to *"deploy a VM to Proxmox"* and it tends to barrel into
-`qm create` — stale defaults, skipped prerequisites. This Claude Code plugin
-intercepts that pattern with agent guardrails and live verification:
+`qm create` — stale defaults, skipped prerequisites. This plugin intercepts
+that pattern with agent guardrails and live verification:
 
 1. **Recognize** (`ground-first` skill, model-elected) — the agent judges, from
    its *own understanding*, whether a request is complex/irreversible enough to

@@ -28,6 +28,14 @@ before acting, and is hard-blocked from irreversible steps until it has.
 /plugin install trigger-my-training@88plug
 ```
 
+### Grok Build
+
+```text
+grok plugin marketplace add 88plug/claude-code-plugins
+grok plugin install trigger-my-training@88plug --trust
+```
+
+
 The hard gate and the `ground-first` skill work immediately. Optional status-line
 badge (`⏚ TMT:armed` / `:grounded`):
 

@@ -29,6 +29,14 @@ model's training, don't encode static rules a human guessed at.*
     /plugin install trigger-my-training@88plug
     ```
 
+### Grok Build
+
+```text
+grok plugin marketplace add 88plug/claude-code-plugins
+grok plugin install trigger-my-training@88plug --trust
+```
+
+
 === "Local clone"
 
     ```bash

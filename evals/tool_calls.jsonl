@@ -60,3 +60,12 @@
 {"tool": "Bash", "input": {"command": "ls /data | xargs rm -f"}, "expect": "mutating", "cat": "adversarial-bypass"}
 {"tool": "Bash", "input": {"command": "find . -name \"*.py\" -type f"}, "expect": "readonly", "cat": "readonly-tricky"}
 {"tool": "Bash", "input": {"command": "find . -path \"*/migrations/*.sql\""}, "expect": "readonly", "cat": "readonly-tricky"}
+{"tool": "Bash", "input": {"command": "find . -name \"*.py\" 2>/dev/null | head"}, "expect": "readonly", "cat": "readonly-tricky"}
+{"tool": "Bash", "input": {"command": "grep -rn \"rm -rf\" ."}, "expect": "readonly", "cat": "readonly-tricky"}
+{"tool": "Bash", "input": {"command": "ruff check . --exclude eval-workspace"}, "expect": "readonly", "cat": "readonly-tricky"}
+{"tool": "Bash", "input": {"command": "echo done > /tmp/tmt-scratch.txt"}, "expect": "write-local", "cat": "local-edit"}
+{"tool": "Bash", "input": {"command": "echo status > /home/user/project/build.log"}, "expect": "write-local", "cat": "local-edit"}
+{"tool": "Bash", "input": {"command": "cat report.txt >> ~/notes.md"}, "expect": "write-local", "cat": "local-edit"}
+{"tool": "Bash", "input": {"command": "git status && git log --oneline -5"}, "expect": "readonly", "cat": "readonly-tricky"}
+{"tool": "Bash", "input": {"command": "echo evil > \"/etc/cron.d/x\""}, "expect": "mutating", "cat": "adversarial-bypass"}
+{"tool": "Bash", "input": {"command": "printf boom >'/etc/profile.d/x.sh'"}, "expect": "mutating", "cat": "adversarial-bypass"}

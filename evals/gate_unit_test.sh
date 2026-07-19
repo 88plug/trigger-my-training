@@ -21,6 +21,26 @@ o=$(echo "{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"pvesh get /stora
   | python3 $BIN/tmt_enforce.py)
 ok "${o:-EMPTY}" "EMPTY" "read-only probe allowed"
 
+# 2b. probe with a /dev/null stderr redirect must NOT be flagged mutating
+o=$(echo "{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"find ~/x -iname foo 2>/dev/null | head\"},\"session_id\":\"$SID\"}" \
+  | python3 $BIN/tmt_enforce.py)
+ok "${o:-EMPTY}" "EMPTY" "probe with 2>/dev/null redirect allowed"
+
+# 2c. a real write to a SYSTEM path is still gated
+d=$(echo "{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"echo x > /etc/hosts\"},\"session_id\":\"$SID\"}" \
+  | python3 $BIN/tmt_enforce.py | python3 -c "import json,sys;print(json.load(sys.stdin)['hookSpecificOutput']['permissionDecision'])" 2>/dev/null)
+ok "${d:-allow}" "deny" "write to /etc system path still denied"
+
+# 2d. a write to the user's OWN tree (/tmp) is a reversible local edit -> allowed
+o=$(echo "{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"echo x > /tmp/scratch.txt\"},\"session_id\":\"$SID\"}" \
+  | python3 $BIN/tmt_enforce.py)
+ok "${o:-EMPTY}" "EMPTY" "redirect to /tmp (own tree) allowed"
+
+# 2e. a QUOTED system-path redirect must not slip past normalization
+d=$(echo "{\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"echo x > \\\"/etc/cron.d/x\\\"\"},\"session_id\":\"$SID\"}" \
+  | python3 $BIN/tmt_enforce.py | python3 -c "import json,sys;print(json.load(sys.stdin)['hookSpecificOutput']['permissionDecision'])" 2>/dev/null)
+ok "${d:-allow}" "deny" "quoted /etc redirect still denied (no quote-strip bypass)"
+
 # 3. local file edit allowed
 o=$(echo "{\"tool_name\":\"Edit\",\"tool_input\":{},\"session_id\":\"$SID\"}" \
   | python3 $BIN/tmt_enforce.py)

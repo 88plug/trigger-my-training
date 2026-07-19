@@ -444,8 +444,11 @@ MUTATING_BASH = [
     r"\bchmod\b",
     r"\bchown\b",
     r"\btruncate\b",
-    r">\s*/",
-    r">>\s*/",
+    # NOTE: write/append redirects are NOT matched here. A blanket `>\s*/` flagged
+    # every absolute-path redirect (incl. the harmless `2>/dev/null` a read probe
+    # uses) as destructive, contradicting the "readonly/write-local always pass"
+    # design invariant. Redirect classification now lives in SYS_REDIRECT (system
+    # paths / block devices only), applied to the quote/sink-normalized command.
     r"\bqm\s+(create|set|clone|start|stop|shutdown|destroy|migrate|resize|rollback|importdisk|template)\b",
     r"\bpct\s+(create|set|start|stop|destroy|migrate)\b",
     r"\bpvesh\s+(create|set|delete)\b",
@@ -465,8 +468,9 @@ MUTATING_BASH = [
     r"\b(apt|apt-get|yum|dnf|pacman|zypper|brew)\s+(install|remove|purge|upgrade|-S)\b",
     r"\bpip\s+install\b",
     r"\bnpm\s+(install|i|publish|uninstall)\b",
-    r"\bpsql\b.*-c\s+[\"']?\s*(insert|update|delete|drop|alter|truncate|create)\b",
-    r"\bmysql\b.*-e\s+[\"']?\s*(insert|update|delete|drop|alter|truncate|create)\b",
+    # NOTE: psql/mysql SQL-exec patterns live in SQL_MUTATING_RAW — their signal is
+    # the SQL verb INSIDE the quoted `-c/-e` argument, so they must match the RAW
+    # command before quote-stripping normalization runs.
     r"\bredis-cli\s+(set|del|flushall|flushdb|config set)\b",
     r"\brabbitmqctl\s+(delete|purge|set|stop|reset)\b",
     r"\bcrontab\b",
@@ -544,18 +548,112 @@ GENERIC_DESTRUCTIVE = (
 )
 
 # Side-effect signals that turn an otherwise-unrecognized command dangerous.
-# Checked BEFORE the readonly patterns so a readonly prefix can't mask them
-# (e.g. `echo payload | bash`, `ls > /etc/hosts`).
+# These are STRUCTURAL (unquoted operators / flags), so they survive the quote
+# and sink-redirect normalization — which is exactly why `echo 'rm -rf x' | bash`
+# still gates: the danger is the unquoted `| bash`, not the quoted payload.
+# Redirect signals are NOT here anymore — see SYS_REDIRECT.
 SUSPICIOUS_UNKNOWN = [
-    r"(>|>>)\s*(/|~)",
     r"\|\s*(sudo\s+)?(sh|bash|zsh|python3?|perl|ruby|node)\b",
     r"\btee\s+(/|~)",
     r"\bcurl\b[^|]*\|\s*(sudo\s+)?(sh|bash)",
     # opaque interpreter one-liners: can't verify the body, so when the gate is
     # armed we fail closed and require grounding rather than trust it.
     r"\b(python3?|perl|ruby|node|php)\s+(-c|-e)\b",
-    r"\beval\b",
+    # `eval` as a command word only (segment head or after a shell operator) — so
+    # the shell builtin gates, but `eval-workspace` / `eval.py` as an argument does
+    # not false-block.
+    r"(?:^|[;&|(]|&&|\|\|)\s*eval(?=\s|[\"'$]|$)",
 ]
+
+# psql/mysql SQL-exec: matched on the RAW command (verb lives inside quotes).
+SQL_MUTATING_RAW = [
+    r"\bpsql\b.*-c\s+[\"']?\s*(insert|update|delete|drop|alter|truncate|create)\b",
+    r"\bmysql\b.*-e\s+[\"']?\s*(insert|update|delete|drop|alter|truncate|create)\b",
+]
+
+# Write/append redirect to a SYSTEM path or block device ONLY. Redirects to the
+# user's own tree (home, project, /tmp) and to /dev sinks never fire — a shell
+# write to your own files is a reversible local edit, not a destructive infra op.
+SYS_REDIRECT = re.compile(
+    r">>?\s*/(?:etc|var|usr|boot|sys|proc|lib|lib64|s?bin|root)(?:/|\b)"
+    r"|>>?\s*/dev/(?:sd|hd|vd|xvd|nvme|mmcblk|loop|dm-|md|sr|nbd|mapper/)",
+    re.IGNORECASE,
+)
+
+# Sink redirects a read-only probe uses (`2>/dev/null`, `&>/dev/null`, `2>&1`,
+# `2>/dev/stderr`, …) — stripped before any redirect matching so they can't be
+# mistaken for a write.
+_SINK_REDIRECT = re.compile(
+    r"(?:\d*|&)\s*>>?\s*/dev/(?:null|zero|full|tty|stdout|stderr|fd/\d+|u?random)\b"
+    r"|\d*>&\d+",
+    re.IGNORECASE,
+)
+
+# Un-quote a redirect TARGET only: `> "/etc/x"` -> `> /etc/x`. Closes the bypass
+# where quoting a system path would otherwise erase it during quote stripping.
+_REDIR_TARGET_QUOTE = re.compile(r"""(>>?\s*)(["'])(/[^"']*)\2""")
+
+
+def _strip_quotes(s):
+    """Remove single/double-quoted spans (each -> one space), per shell rules, so a
+    destructive WORD inside a grep pattern / filename / flag stops matching. A quote
+    of the other type inside a quoted span is literal."""
+    out, quote = [], None
+    for ch in s:
+        if quote:
+            if ch == quote:
+                quote = None
+            continue
+        if ch in ("'", '"'):
+            quote = ch
+            out.append(" ")
+            continue
+        out.append(ch)
+    return "".join(out)
+
+
+def _normalize_cmd(cmd):
+    """Shell-aware normalization for destructive-token matching:
+    1. un-quote redirect targets (keep quoted system paths visible),
+    2. strip sink redirects (/dev/null, 2>&1, …),
+    3. strip all remaining quoted spans."""
+    s = _REDIR_TARGET_QUOTE.sub(r"\1\3", cmd or "")
+    s = _SINK_REDIRECT.sub(" ", s)
+    return _strip_quotes(s)
+
+
+def _classify_bash(cmd):
+    """Reversibility class for a Bash command. Order matters: the worst-case step
+    governs the chain, but a read/print/search prefix and quote/sink normalization
+    keep read-only probes (incl. those carrying `2>/dev/null`) from false-blocking."""
+    raw = cmd or ""
+    # A. Quote-dependent SQL execs: signal lives inside quotes -> match RAW.
+    for pat in SQL_MUTATING_RAW:
+        if re.search(pat, raw, re.IGNORECASE):
+            return "mutating"
+    norm = _normalize_cmd(raw)
+    # B. Explicit destructive command patterns, on the normalized string.
+    for pat in MUTATING_BASH:
+        if re.search(pat, norm, re.IGNORECASE):
+            return "mutating"
+    # C. Write/append redirect to a SYSTEM path or block device only.
+    if SYS_REDIRECT.search(norm):
+        return "mutating"
+    # D. Generic destructive verb, unless this is a read/print/search command
+    #    (destructive word is then just an argument).
+    if not re.search(SEARCH_PREFIX, raw, re.IGNORECASE) and re.search(
+        GENERIC_DESTRUCTIVE, norm, re.IGNORECASE
+    ):
+        return "mutating"
+    # E. Structural side-effect signals (pipe-to-shell, opaque interpreter, eval).
+    for pat in SUSPICIOUS_UNKNOWN:
+        if re.search(pat, norm, re.IGNORECASE):
+            return "mutating"
+    # F. Explicit readonly probes (RAW, so psql SELECT etc. survive).
+    for pat in READONLY_BASH:
+        if re.search(pat, raw, re.IGNORECASE):
+            return "readonly"
+    return "unknown"
 
 
 def _mcp_tool_leaf(name):
@@ -635,26 +733,7 @@ def classify_tool(tool_name, tool_input):
         cmd = ""
         if isinstance(tool_input, dict):
             cmd = tool_input.get("command", "") or ""
-        # 1. explicit destructive patterns (worst-case step governs the chain)
-        for pat in MUTATING_BASH:
-            if re.search(pat, cmd, re.IGNORECASE):
-                return "mutating"
-        # 2. generic destructive verb as a sub-command, unless this is a
-        #    read/print/search command that merely mentions the word
-        if not re.search(SEARCH_PREFIX, cmd, re.IGNORECASE) and re.search(
-            GENERIC_DESTRUCTIVE, cmd, re.IGNORECASE
-        ):
-            return "mutating"
-        # 3. fail closed on side-effect signals (before readonly, so a readonly
-        #    prefix like `echo ... | bash` cannot mask them)
-        for pat in SUSPICIOUS_UNKNOWN:
-            if re.search(pat, cmd, re.IGNORECASE):
-                return "mutating"
-        # 4. explicit readonly probes
-        for pat in READONLY_BASH:
-            if re.search(pat, cmd, re.IGNORECASE):
-                return "readonly"
-        return "unknown"
+        return _classify_bash(cmd)
     # MCP (mcp__server__tool) and server/tool prefixes: classify by name shape.
     if name.startswith("mcp__") or "/" in name:
         return _classify_mcp(name, tool_input)

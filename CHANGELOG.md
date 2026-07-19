@@ -4,6 +4,36 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions use calver
 (`YYYY.M.N`), most recent first.
 
+## 2026.7.19 — shell-aware classifier (false-block fix)
+
+### Fixed (gate precision)
+
+The Bash reversibility classifier substring-matched its destructive patterns
+against the raw, unparsed command and ran the mutating scans before the
+read-only check, so any read-only probe that merely *contained* a destructive
+token was hard-denied — contradicting the "readonly / write-local always pass"
+invariant. Confirmed false-blocks included `… 2>/dev/null` (stderr sink),
+`echo x > /tmp/f` and `> ~/f` (writes to the user's own tree), `grep 'rm -rf' .`
+(destructive text in a quoted argument), and `--exclude eval-workspace`
+(`eval` matched inside a path). The published "0 false-block" number held only
+because the 62-case corpus contained none of these shapes.
+
+- `classify_tool` now normalizes the command first (`_normalize_cmd`): un-quotes
+  redirect targets, strips `/dev` sink redirects (`2>/dev/null`, `2>&1`, …), then
+  strips remaining quoted spans — so a scary word inside a grep pattern / filename
+  / flag no longer matches. Destructive detection runs on the normalized string;
+  structural signals (`| bash`, opaque `python -c`, `eval` builtin) survive it, so
+  `echo 'rm -rf x' | bash` still gates on the unquoted `| bash`.
+- Write/append redirects are now classified by target: only **system paths**
+  (`/etc`, `/var`, `/usr`, …) and **block devices** gate (`SYS_REDIRECT`); redirects
+  to home / project / `/tmp` and `/dev` sinks pass, matching the reversible-local
+  intent. Quoting a system path (`> "/etc/cron.d/x"`) no longer bypasses the gate.
+- `eval` gates only as a command word, not as a substring of `eval-workspace` /
+  `eval.py`.
+- Corpus expanded 62 → 71 with the previously-missing benign shapes (and the
+  quoted-system-path bypass as an interception case). Measured **45/45
+  interception, 0 bypass, 0 false-block**; +regression cases in `gate_unit_test.sh`.
+
 ## 2026.6.23 — stable
 
 The architecture is settled and every surface is consistent with it: a

@@ -163,7 +163,7 @@ if hj.exists():
                     ):
                         err(
                             f"hooks/hooks.json {event}: bare '{first}' command — "
-                            "use bash \"${CLAUDE_PLUGIN_ROOT}/scripts/…\" launcher"
+                            'use bash "${CLAUDE_PLUGIN_ROOT}/scripts/…" launcher'
                         )
 
 # --- 4b. statusLine command path (optional; not a real plugin.json field but
@@ -173,7 +173,9 @@ if man.exists():
         m = json.loads(man.read_text())
     except Exception:
         m = {}
-    cmd = ((m.get("statusLine") or {}) if isinstance(m, dict) else {}).get("command") or ""
+    cmd = ((m.get("statusLine") or {}) if isinstance(m, dict) else {}).get(
+        "command"
+    ) or ""
     for ref in re.findall(r"\$\{CLAUDE_PLUGIN_ROOT\}/([^\s\"']+)", cmd):
         if not (ROOT / ref).exists():
             err(f"plugin.json statusLine: references missing file: {ref}")

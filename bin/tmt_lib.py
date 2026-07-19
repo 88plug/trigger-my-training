@@ -668,7 +668,9 @@ def plan_allows_bash(command, state):
     approved_commands non-empty: exact strip-match against one approved entry.
     plan_hash alone: allow only if plan_hash([this_cmd]) matches the stored hash.
     """
-    approved = [c.strip() for c in (state.get("approved_commands") or []) if c and c.strip()]
+    approved = [
+        c.strip() for c in (state.get("approved_commands") or []) if c and c.strip()
+    ]
     ph = state.get("plan_hash")
     if not approved and not ph:
         return True

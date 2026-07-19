@@ -1,5 +1,5 @@
 site_name: Trigger My Training
-site_description: A ground-first reflex for coding agents — judge complexity from training, ground before acting, hard-block the irreversible step.
+site_description: 'Claude Code plugin for agent safety and grounding — a ground-first reflex'
 site_url: https://88plug.github.io/trigger-my-training/
 repo_url: https://github.com/88plug/trigger-my-training
 repo_name: 88plug/trigger-my-training

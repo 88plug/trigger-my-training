@@ -4,6 +4,7 @@
 [![License: FSL-1.1-ALv2](https://img.shields.io/badge/license-FSL--1.1--ALv2-blue?style=flat)](https://github.com/88plug/trigger-my-training/blob/main/LICENSE)
 [![Version](https://img.shields.io/badge/version-2026.6.23-green?style=flat)](https://github.com/88plug/trigger-my-training/blob/main/CHANGELOG.md)
 [![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-8A2BE2?style=flat)](https://github.com/88plug/claude-code-plugins)
+[![Docs](https://img.shields.io/badge/docs-online-blue?style=flat)](https://88plug.github.io/trigger-my-training/)
 
 **A ground-first reflex for coding agents.** On a complex or irreversible
 request, the agent stops, reconstructs the domain's reality, treats its own
@@ -45,7 +46,7 @@ grok plugin install trigger-my-training@88plug --trust
     ```
 
 At enable time you can set `gate_mode` and `hard_gate` (see
-[Configuration](userconfig-design.md)). Defaults are safe: gate on, hard deny.
+[Configuration](https://github.com/88plug/trigger-my-training/blob/main/userconfig-design.md)). Defaults are safe: gate on, hard deny.
 
 Optional status-line badge (`⏚ TMT:armed` / `:grounded`):
 
@@ -89,7 +90,7 @@ on the model it gates.
 
 Independent kill-switch: `hard_gate=false` keeps the skill reflex but stops the
 deny (advisory-only). Full tables and env wiring live in
-[Configuration](userconfig-design.md).
+[Configuration](https://github.com/88plug/trigger-my-training/blob/main/userconfig-design.md).
 
 !!! warning "Default is the hard deny"
     `gate_mode=full` and `hard_gate=true` are the defaults. A destructive/infra
@@ -121,7 +122,7 @@ The hard gate needs **no keyword detector** to arm.
          grounded                → ALLOW
 ```
 
-Details, tool classes, and the release path: [Architecture](architecture.md).
+Details, tool classes, and the release path: [Architecture](https://github.com/88plug/trigger-my-training/blob/main/architecture.md).
 
 !!! warning "`tmt-ground commit` requires real probes"
     Commit refuses if no read-only probe is on record. Grounding means verifying
@@ -146,6 +147,24 @@ Commands for operators: `/status` `/ground` `/reset` `/brief` `/explain`
 
 | Page | What it covers |
 |---|---|
-| [Architecture](architecture.md) | detect → ground → gate → release; self-arm; tool classes |
-| [Configuration](userconfig-design.md) | `gate_mode`, `hard_gate`, env vars |
-| [Research ledger](research.md) | how every default was proven (falsification-first) |
+| [Architecture](https://github.com/88plug/trigger-my-training/blob/main/architecture.md) | detect → ground → gate → release; self-arm; tool classes |
+| [Configuration](https://github.com/88plug/trigger-my-training/blob/main/userconfig-design.md) | `gate_mode`, `hard_gate`, env vars |
+| [Research ledger](https://github.com/88plug/trigger-my-training/blob/main/research.md) | how every default was proven (falsification-first) |
+
+## Development
+
+Local checkout (no marketplace):
+
+```bash
+claude --plugin-dir /path/to/trigger-my-training
+```
+
+```bash
+bash tests/run.sh          # unit tests
+bash evals/run.sh          # the experiments
+claude plugin validate .   # manifest check
+mkdocs build --strict      # docs site
+```
+
+See [`CONTRIBUTING.md`](https://github.com/88plug/trigger-my-training/blob/main/CONTRIBUTING.md) for the bin/hook architecture,
+[`CHANGELOG.md`](https://github.com/88plug/trigger-my-training/blob/main/CHANGELOG.md), and [`SECURITY.md`](https://github.com/88plug/trigger-my-training/blob/main/SECURITY.md).

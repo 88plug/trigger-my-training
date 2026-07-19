@@ -168,3 +168,41 @@ mkdocs build --strict      # docs site
 
 See [`CONTRIBUTING.md`](https://github.com/88plug/trigger-my-training/blob/main/CONTRIBUTING.md) for the bin/hook architecture,
 [`CHANGELOG.md`](https://github.com/88plug/trigger-my-training/blob/main/CHANGELOG.md), and [`SECURITY.md`](https://github.com/88plug/trigger-my-training/blob/main/SECURITY.md).
+
+## Metrics
+
+
+Built falsification-first. Full ledger: [`EXPERIMENTS.md`](https://github.com/88plug/trigger-my-training/blob/main/EXPERIMENTS.md).
+
+- **Detector (Exp 2, deterministic):** clean separation of operational vs
+  edit-intent on a 28-task labelled corpus — precision/recall **1.0**, **0**
+  false positives (in-sample; real-world calibration is known debt).
+- **Hard gate (Exp 3, unit):** blocks the mutation, allows probes + local
+  edits, releases after grounding — **7/7**.
+- **Landmine-catch (Exp 1, A/B + ablation, powered to 12 domains):** replicated
+  on `claude-haiku-4-5` —
+
+  | arm | catch-rate | vs baseline |
+  | --- | --- | --- |
+  | no plugin | 0.181 | — |
+  | **compact Pre-Mortem Brief** | **0.386** | **~2.1×** |
+  | + Staleness Axiom alone | 0.156 | worse (axiom alone does nothing) |
+  | enriched (4 composed inventions) | 0.258 | worse than the plain brief |
+
+  The campaign **falsified its own maximalist hypothesis**: a one-line "your
+  training is stale" axiom does nothing, and *composing* more proven cognitive
+  scaffolds (Tetlock calibration tags + Deming predict-then-check + Deutsch
+  hard-to-vary) **regressed** the gain. The active ingredient is one 3-line
+  structural trigger — Klein's pre-mortem + Popper's "enumerate how it breaks."
+  **Adding cognitive mass crowds it out.** That result survived replication
+  across 12 domains; an exciting single-run "win" for the enriched slate did
+  not (Twyman's law). Honest accounting of "10×": the replicated grounding
+  number is **~2.1×**; the only *literal* ≥10× is the poka-yoke gate taking
+  irreversible-action interception from ~0 to ~1.0. Full ledger:
+  [`EXPERIMENTS.md`](https://github.com/88plug/trigger-my-training/blob/main/EXPERIMENTS.md), invention slate: [`INVENTIONS.md`](https://github.com/88plug/trigger-my-training/blob/main/INVENTIONS.md).
+
+```bash
+bash evals/run.sh                 # all three experiments
+python3 evals/detector_eval.py    # free deterministic detector eval
+```
+

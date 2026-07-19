@@ -716,6 +716,7 @@ def _state_dir(data_dir):
     # plugin updates) > TMT_DATA (eval isolation) > ~/.tmt/data (fallback).
     base = (
         data_dir
+        or os.environ.get("GROK_PLUGIN_DATA")
         or os.environ.get("CLAUDE_PLUGIN_DATA")
         or os.environ.get("TMT_DATA")
         or os.path.join(os.path.expanduser("~"), ".tmt", "data")

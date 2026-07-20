@@ -493,7 +493,7 @@ MUTATING_BASH = [
     r"\bgem\s+push\b",
     r"\bgo\s+install\b",
     # cloud / orchestration CLIs (destructive verbs)
-    r"\baws\s+\w+\s+(delete|terminate|deregister|remove|put|create|stop|reboot)",
+    r"\baws\s+\w+\s+(delete|terminate|deregister|remove|rm|mv|put|create|stop|reboot)",
     r"\bgcloud\s+.*\b(delete|create|stop|reset|deploy)\b",
     r"\baz\s+.*\b(delete|create|stop|deploy)\b",
     r"\b(doctl|flyctl|fly|heroku|vercel|wrangler|supabase|oc|nomad)\b.*\b(delete|destroy|deploy|create|scale|restart|rm)\b",
@@ -537,6 +537,7 @@ MCP_READONLY_NAME = re.compile(
 # destructive-verb catch below.
 SEARCH_PREFIX = (
     r"^\s*(grep|rg|ag|ack|awk|sed\s+-n|find|cat|less|more|head|tail|echo|"
+    r"stat|ls|file|readlink|realpath|test|du|df|"
     r"printf|comm|diff|sort|uniq|wc|jq|yq|column|tr|cut|paste|fold|tee\s*$)\b"
 )
 
@@ -554,7 +555,8 @@ GENERIC_DESTRUCTIVE = (
 # Redirect signals are NOT here anymore — see SYS_REDIRECT.
 SUSPICIOUS_UNKNOWN = [
     r"\|\s*(sudo\s+)?(sh|bash|zsh|python3?|perl|ruby|node)\b",
-    r"\btee\s+(/|~)",
+    # tee to a SYSTEM path (own-tree tee is a reversible local write, not gated)
+    r"\btee\s+(?:-a\s+)?/(?:etc|var|usr|boot|sys|proc|lib|s?bin|root)(?:/|\b)",
     r"\bcurl\b[^|]*\|\s*(sudo\s+)?(sh|bash)",
     # opaque interpreter one-liners: can't verify the body, so when the gate is
     # armed we fail closed and require grounding rather than trust it.
@@ -622,6 +624,35 @@ def _normalize_cmd(cmd):
     return _strip_quotes(s)
 
 
+# A destructive command only mutates when INVOKED at a command position — start
+# of line, or right after a separator that begins a new simple command
+# (`;` `|` `&` `(` newline backtick `$(`), with optional sudo / command / env
+# prefixes. Anchoring here is what stops `cat /etc/passwd`, `grep iptables notes`,
+# `stat deregister.json` etc. from matching a command NAME that is merely an
+# argument or path.
+_CMD_POS = r"(?:^|[\n;|&(`]|\$\()\s*(?:sudo\s+|command\s+|\w+=\S+\s+)*"
+
+
+def _anchor_cmd(p):
+    # `tee`: gate only on a SYSTEM-path target; a tee to the user's own tree is a
+    # reversible local write.
+    if p == r"\btee\b":
+        return (
+            _CMD_POS
+            + r"tee\s+(?:-a\s+)?/(?:etc|var|usr|boot|sys|proc|lib|lib64|s?bin|root)(?:/|\b)"
+        )
+    if p.startswith(r"\b"):
+        return _CMD_POS + p[2:]
+    return p
+
+
+# MUTATING_BASH stays the readable source of destructive command patterns; this
+# derived list anchors each command name to a command position so it can't match
+# as an argument. Patterns already position-anchored or structural (`: >`) pass
+# through unchanged.
+MUTATING_BASH_ANCHORED = [_anchor_cmd(p) for p in MUTATING_BASH]
+
+
 def _classify_bash(cmd):
     """Reversibility class for a Bash command. Order matters: the worst-case step
     governs the chain, but a read/print/search prefix and quote/sink normalization
@@ -632,8 +663,9 @@ def _classify_bash(cmd):
         if re.search(pat, raw, re.IGNORECASE):
             return "mutating"
     norm = _normalize_cmd(raw)
-    # B. Explicit destructive command patterns, on the normalized string.
-    for pat in MUTATING_BASH:
+    # B. Explicit destructive command patterns (anchored to command position),
+    #    on the normalized string.
+    for pat in MUTATING_BASH_ANCHORED:
         if re.search(pat, norm, re.IGNORECASE):
             return "mutating"
     # C. Write/append redirect to a SYSTEM path or block device only.

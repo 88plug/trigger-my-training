@@ -69,3 +69,10 @@
 {"tool": "Bash", "input": {"command": "git status && git log --oneline -5"}, "expect": "readonly", "cat": "readonly-tricky"}
 {"tool": "Bash", "input": {"command": "echo evil > \"/etc/cron.d/x\""}, "expect": "mutating", "cat": "adversarial-bypass"}
 {"tool": "Bash", "input": {"command": "printf boom >'/etc/profile.d/x.sh'"}, "expect": "mutating", "cat": "adversarial-bypass"}
+{"tool": "Bash", "input": {"command": "cat /etc/passwd"}, "expect": "readonly", "cat": "readonly-tricky"}
+{"tool": "Bash", "input": {"command": "grep -rn iptables notes.md"}, "expect": "readonly", "cat": "readonly-tricky"}
+{"tool": "Bash", "input": {"command": "stat /tmp/deregister.json"}, "expect": "readonly", "cat": "readonly-tricky"}
+{"tool": "Bash", "input": {"command": "ls | tee /tmp/listing.txt"}, "expect": "write-local", "cat": "local-edit"}
+{"tool": "Bash", "input": {"command": "echo x | tee /etc/hosts"}, "expect": "mutating", "cat": "adversarial-bypass"}
+{"tool": "Bash", "input": {"command": "sudo passwd root"}, "expect": "mutating", "cat": "destructive-system"}
+{"tool": "Bash", "input": {"command": "aws s3 mv data.csv s3://bucket/"}, "expect": "mutating", "cat": "destructive-cloud"}

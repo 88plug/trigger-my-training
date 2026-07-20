@@ -34,6 +34,21 @@ because the 62-case corpus contained none of these shapes.
   quoted-system-path bypass as an interception case). Measured **45/45
   interception, 0 bypass, 0 false-block**; +regression cases in `gate_unit_test.sh`.
 
+### Fixed (command-position anchoring)
+
+A destructive command NAME appearing as an argument or path was still matched as
+if the command were invoked — so `cat /etc/passwd`, `grep iptables notes`,
+`stat deregister.json`, `cat modprobe.conf` false-blocked. Destructive command
+patterns are now anchored to a **command position** (`_CMD_POS`: start of line or
+after `;`/`|`/`&`/`(`/`` ` ``/`$(`, with optional sudo/env prefixes) via
+`MUTATING_BASH_ANCHORED`, so a command name only gates when actually run.
+
+- Surfaced and fixed a latent interception gap: `aws s3 rm|mv` were only caught
+  by the accidental bare-`rm` substring match; now explicit in the aws pattern.
+- `tee` gates only on a **system-path** target (own-tree `tee` is a reversible
+  local write); read tools `stat`/`ls`/`file`/`readlink`/`realpath`/… added to
+  the search-prefix exemption. Corpus 71 → 77.
+
 ## 2026.6.23 — stable
 
 The architecture is settled and every surface is consistent with it: a
